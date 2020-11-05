@@ -1,6 +1,10 @@
 spring:
   application:
     name: chessmaster-web
+  servlet:
+    multipart:
+      max-file-size: 4MB
+      max-request-size: 4MB
 
   thymeleaf:
     enabled: true
