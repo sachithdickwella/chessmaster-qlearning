@@ -28,7 +28,6 @@ public class MovementController {
      */
     @PostMapping(path = "/grab", consumes = MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> grabImage(@RequestParam("file") MultipartFile file) {
-
         return ResponseEntity.ok().build();
     }
 }

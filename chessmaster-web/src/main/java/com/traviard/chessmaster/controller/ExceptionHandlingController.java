@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -21,6 +22,7 @@ public class ExceptionHandlingController {
      * Send out BAD REQUEST (HTTP 400) error when the uploaded file or any other
      * IO operation fails.
      *
+     * @param request of {@link HttpServletRequest} ingested from servlet container.
      * @return an instance of {@link ResponseEntity} of {@link String}.
      */
     @ExceptionHandler(IOException.class)
@@ -31,6 +33,24 @@ public class ExceptionHandlingController {
                         .status(HttpStatus.BAD_REQUEST.value())
                         .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
                         .message("Problem with a I/O operations in the path")
+                        .path(request.getRequestURI())
+                        .build());
+    }
+
+    /**
+     * Send out BAD REQUEST (HTTP 400) error when the uploaded file exceeds it configured limit.
+     *
+     * @param request of {@link HttpServletRequest} ingested from servlet container.
+     * @return an instance of {@link ResponseEntity} of {@link String}.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<HttpErrorResponse> maximumFileSizeExceeded(@NotNull HttpServletRequest request) {
+        return ResponseEntity.badRequest()
+                .body(HttpErrorResponse.builder()
+                        .timestamp(LocalDateTime.now())
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                        .message("Maximum file size exceeded. File size should be 4MB or less.")
                         .path(request.getRequestURI())
                         .build());
     }
