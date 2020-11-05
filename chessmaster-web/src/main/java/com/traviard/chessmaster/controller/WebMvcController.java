@@ -25,7 +25,6 @@ public class WebMvcController {
     @Value("${app.home.title}")
     private String appHomeTitle;
 
-
     /**
      * Model mapping for the home/main page.
      *
