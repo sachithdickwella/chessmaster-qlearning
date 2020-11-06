@@ -1,6 +1,5 @@
 package com.traviard.chessmaster.util;
 
-import com.traviard.chessmaster.component.StaticServerComponent;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,11 +10,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum LogMessages {
 
-    /**
-     * When the {@link StaticServerComponent} startup success.
-     */
-    INFO_STATIC_SERVER_INIT_SUCCESS("{} initialized with port(s): {} (tcp)",
-            StaticServerComponent.class.getSimpleName()),
     /**
      * When the file push to client queue is success.
      */

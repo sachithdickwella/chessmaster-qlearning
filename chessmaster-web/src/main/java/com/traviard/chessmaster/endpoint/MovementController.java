@@ -1,6 +1,6 @@
 package com.traviard.chessmaster.endpoint;
 
-import com.traviard.chessmaster.component.StaticServerComponent;
+import com.traviard.chessmaster.component.StaticClientComponent;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,10 +35,10 @@ public class MovementController {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(MovementController.class);
     /**
-     * Instance of {@link StaticServerComponent} to access external server socket
+     * Instance of {@link StaticClientComponent} to access external server socket
      * to push content.
      */
-    private final StaticServerComponent serverComponent;
+    private final StaticClientComponent serverComponent;
 
     /**
      * Single-arg constructor to initialize {@link #serverComponent} local member to work
@@ -47,7 +47,7 @@ public class MovementController {
      * @param serverComponent which inject by the Application Context.
      */
     @Autowired
-    public MovementController(@NotNull StaticServerComponent serverComponent) {
+    public MovementController(@NotNull StaticClientComponent serverComponent) {
         this.serverComponent = serverComponent;
     }
 
