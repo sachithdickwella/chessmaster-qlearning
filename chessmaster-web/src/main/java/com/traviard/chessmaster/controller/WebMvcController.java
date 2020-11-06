@@ -7,6 +7,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.UUID;
+
 /**
  * @author Sachith Dickwella
  */
@@ -17,6 +19,7 @@ public class WebMvcController {
     /**
      * Application title in {@link String}.
      */
+    @SuppressWarnings("unused")
     @Value("${app.name}")
     private String appName;
     /**
@@ -34,6 +37,7 @@ public class WebMvcController {
     @GetMapping(path = {"/", "index", "index.html"})
     public String index(@NotNull Model model) {
         model.addAttribute("title", appHomeTitle);
+        model.addAttribute("id", UUID.randomUUID());
         return "index";
     }
 }
