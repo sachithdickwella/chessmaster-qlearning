@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
+from util import socket_acces
+
 if __name__ == '__main__':
-    print("Hello, World!")
+    socket_acces.init()
