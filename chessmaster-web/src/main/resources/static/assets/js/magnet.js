@@ -6,21 +6,29 @@ $(() => {
     board.start()
 });
 
-const shot = () => html2canvas(document.querySelector("#board1")).then(canvas => call(canvas.toDataURL()));
+const shot = () => html2canvas(document.querySelector("#board1")).then(canvas => call(canvas));
 
-const call = (data) => {
-    const form = new FormData()
-    form.append('file', data)
-    $.ajax({
-        url: '/movement/grab',
-        method: 'POST',
-        enctype: 'multipart/form-data',
-        contentType: false,
-        processData: false,
-        cache: false,
-        data: form,
-        success: (msg) => {
-            console.log(msg)
-        }
-    })
+const call = (canvas) => {
+    canvas.toBlob((blob) => {
+        const form = new FormData()
+        form.append('file', blob, 'board-frame')
+        $.ajax({
+            url: '/movement/grab',
+            method: 'POST',
+            enctype: 'multipart/form-data',
+            contentType: false,
+            processData: false,
+            cache: false,
+            data: form,
+            beforeSend: (_ /* jqXHR */) => {
+                /*
+                 * Show ajax loader before send the frame and show until
+                 * receive a response with the next move.
+                 */
+            },
+            error: (jqXHR) => {
+                console.log(jqXHR)
+            }
+        })
+    }, 'image/png')
 }
