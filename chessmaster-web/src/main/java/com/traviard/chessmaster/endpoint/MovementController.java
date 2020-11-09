@@ -61,11 +61,16 @@ public class MovementController {
     @PostMapping(path = "/grab", consumes = MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> grabImage(@RequestParam("id") String id, @RequestParam("file") MultipartFile file) {
         try {
-            serverComponent.push(id, file.getInputStream());
+            serverComponent.write(id, file.getInputStream());
             LOGGER.info(INFO_FILE_PUSH_SUCCESS.message(
                     id,
                     Optional.ofNullable(file.getOriginalFilename()).orElse("<NoFileName>"),
                     file.getBytes().length));
+
+            var response = serverComponent.read();
+            System.out.println(response);
+
+            System.out.println("Response received");
 
             return ResponseEntity.ok().build();
         } catch (IOException ex) {

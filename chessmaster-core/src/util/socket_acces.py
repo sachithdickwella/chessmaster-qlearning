@@ -61,8 +61,9 @@ class TCPRequestHandler(socketserver.BaseRequestHandler):
             board will be updated.
             """
             self.request.sendall(movement.response())
-        except RuntimeError as ex:
-            print(f'Runtime error: {ex}')
+
+        except (RuntimeError, ConnectionResetError) as ex:
+            print(f'Runtime error: {ex.message}')
 
 
 def init():

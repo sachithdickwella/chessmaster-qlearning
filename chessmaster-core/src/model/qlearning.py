@@ -12,4 +12,4 @@ class MovementHandler(object):
 
     def response(self):
         print(f'{self.uuid}:\n {self.frame}')
-        return "Response to the move!".encode('utf-8')  # To bytearray()
+        return "{}: Response to the move!".format(self.uuid).encode('utf-8')  # To bytearray()

@@ -6,7 +6,11 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import javax.annotation.PostConstruct;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -37,32 +41,51 @@ public class StaticClientComponent {
      */
     @Value("#{T(Integer).parseInt(${app.tcp.server.socket.port})}")
     private int port;
+    /**
+     * Client socket for {@link #host} and {@link #port}.
+     */
+    private Socket socket;
 
     /**
-     * Push downloaded image from UI to the backend Python program as a byte[] with
+     * Post construct method to initialize the {@link #socket} for as the client
+     * and pre-processing tasks.
+     */
+    @PostConstruct
+    public void construct() throws IOException {
+        this.socket = new Socket(host, port);
+    }
+
+    /**
+     * Push the downloaded image from UI to the backend Python program as a byte[] with
      * the UUID came from the UI.
      *
      * @param id          of the UI as a {@link java.util.UUID} instance.
      * @param imageStream object came from UI multipart upload.
      * @throws IOException if the downstream push fails.
      */
-    public void push(@NotNull String id, @NotNull InputStream imageStream) throws IOException {
-        try (var socket = new Socket(host, port);
-             var outputStream = socket.getOutputStream();
-             var inputStream = socket.getInputStream()
-        ) {
-            var streams = List.of(
-                    new ByteArrayInputStream(id.getBytes(StandardCharsets.UTF_8)),
-                    imageStream
-            );
-
-            try (var sequenceStream = new SequenceInputStream(Collections.enumeration(streams))) {
-                /*
-                 * Write the uuid and image stream to the downstream program and flush.
-                 */
-                outputStream.write(sequenceStream.readAllBytes());
-                outputStream.flush();
-            }
+    public void write(@NotNull String id, @NotNull InputStream imageStream) throws IOException {
+        var outputStream = socket.getOutputStream();
+        try (var sequenceStream = new SequenceInputStream(Collections.enumeration(List.of(
+                new ByteArrayInputStream(id.getBytes(StandardCharsets.UTF_8)),
+                imageStream
+        )))) {
+            /*
+             * Write the uuid and image stream to the downstream program and flush.
+             */
+            outputStream.write(sequenceStream.readAllBytes());
+            outputStream.flush();
         }
+
+    }
+
+    /**
+     *
+     */
+    public String read() throws IOException {
+        var inputStream = socket.getInputStream();
+        byte[] buffer = new byte[inputStream.available()];
+        inputStream.read(buffer);
+
+        return new String(buffer);
     }
 }
