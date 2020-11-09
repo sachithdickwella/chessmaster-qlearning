@@ -11,5 +11,5 @@ class MovementHandler(object):
         self.frame = np.array(image)
 
     def response(self):
-        print(self.frame)
+        print(f'{self.uuid}:\n {self.frame}')
         return "Response to the move!".encode('utf-8')  # To bytearray()

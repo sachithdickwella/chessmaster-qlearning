@@ -8,6 +8,9 @@ from PIL import Image
 
 from model.qlearning import MovementHandler
 
+HOST, PORT = ('localhost', 16375)
+FILE_LIMIT_1MB = 1024 * 1024
+
 
 class TCPRequestHandler(socketserver.BaseRequestHandler):
 
@@ -23,9 +26,7 @@ class TCPRequestHandler(socketserver.BaseRequestHandler):
             """
             Capture the UUID from the client program to distinguish which UI
             instance send the request to the model. 
-            """
-            uuid = self.request.recv(1024).strip()
-            """
+
             Capture the image into a :func:`~bytearray()` hence, file receives
             as a stream bytes. 
             
@@ -34,13 +35,18 @@ class TCPRequestHandler(socketserver.BaseRequestHandler):
             larger that 1MB, exceeding parts of the stream will be lost and image
             array will be corrupted. 
             """
-            buffer = bytearray()
-            while len(buffer) < 80000:
-                packet = self.request.recv(4096).strip()
-                if not packet:
+            iteration, uuid, buffer = 0, None, bytearray()
+            while len(buffer) < FILE_LIMIT_1MB:
+                data = self.request.recv(4096).strip()
+                if iteration == 0:
+                    uuid = data[:36].decode('utf-8')
+                    data = data[36:]
+
+                if not data:
                     break
 
-                buffer.extend(packet)
+                buffer.extend(data)
+                iteration += 1
 
             image = Image.open(io.BytesIO(buffer))
             """
@@ -69,7 +75,5 @@ def init():
     For now, server host and port would be 'localhost' and ''16375' respectively and
     should be changed during the deployment.
     """
-    host, port = ('localhost', 16375)
-
-    with socketserver.TCPServer((host, port), TCPRequestHandler) as server:
+    with socketserver.TCPServer((HOST, PORT), TCPRequestHandler) as server:
         server.serve_forever()

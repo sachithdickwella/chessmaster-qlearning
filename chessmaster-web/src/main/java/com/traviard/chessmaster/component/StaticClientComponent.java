@@ -6,11 +6,11 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This {@link StaticClientComponent} to manage and manipulate Python (backend)
@@ -37,11 +37,6 @@ public class StaticClientComponent {
      */
     @Value("#{T(Integer).parseInt(${app.tcp.server.socket.port})}")
     private int port;
-    /**
-     * Default buffer size for input and output streams.
-     */
-    @Value("#{T(Integer).parseInt(${app.io.buffer.size})}")
-    private int bufferSize;
 
     /**
      * Push downloaded image from UI to the backend Python program as a byte[] with
@@ -52,23 +47,22 @@ public class StaticClientComponent {
      * @throws IOException if the downstream push fails.
      */
     public void push(@NotNull String id, @NotNull InputStream imageStream) throws IOException {
-        try (Socket socket = new Socket(host, port);
-             OutputStream outputStream = socket.getOutputStream();
-             InputStream inputStream = socket.getInputStream()
+        try (var socket = new Socket(host, port);
+             var outputStream = socket.getOutputStream();
+             var inputStream = socket.getInputStream()
         ) {
-            /*
-             * Write the uuid and image stream to the downstream program and flush.
-             */
-            outputStream.write(id.getBytes(StandardCharsets.UTF_8));
-            outputStream.write(imageStream.readAllBytes());
-            outputStream.flush();
-            /*
-             *
-             */
-            byte[] buffer = inputStream.readAllBytes();
+            var streams = List.of(
+                    new ByteArrayInputStream(id.getBytes(StandardCharsets.UTF_8)),
+                    imageStream
+            );
 
-            System.out.println(new String(buffer)); // TODO - Update the UI with results.
-            System.out.println("Hello");
+            try (var sequenceStream = new SequenceInputStream(Collections.enumeration(streams))) {
+                /*
+                 * Write the uuid and image stream to the downstream program and flush.
+                 */
+                outputStream.write(sequenceStream.readAllBytes());
+                outputStream.flush();
+            }
         }
     }
 }

@@ -13,7 +13,7 @@ public enum LogMessages {
     /**
      * When the file push to client queue is success.
      */
-    INFO_FILE_PUSH_SUCCESS("{}: '{}' file pushed to client queue: {} bytes"),
+    INFO_FILE_PUSH_SUCCESS("{}: '{}' pushed to client queue: {} bytes"),
     /**
      * When the file push to client queue is fails.
      */
