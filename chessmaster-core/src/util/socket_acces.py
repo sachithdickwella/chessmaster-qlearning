@@ -9,10 +9,9 @@ from PIL import Image
 from model.qlearning import MovementHandler
 
 HOST, PORT = ('localhost', 16375)
-FILE_LIMIT_1MB = 1024 * 1024
 
 
-class TCPRequestHandler(socketserver.BaseRequestHandler):
+class TCPRequestHandler(socketserver.StreamRequestHandler):
 
     def handle(self):
         """
@@ -28,24 +27,22 @@ class TCPRequestHandler(socketserver.BaseRequestHandler):
             instance send the request to the model. 
 
             Capture the image into a :func:`~bytearray()` hence, file receives
-            as a stream bytes. 
+            as a stream of bytes. 
             
             Maximum file size would be 1MB and that validates at the client end
             as well as the here. If the below statement receives a byte stream 
-            larger that 1MB, exceeding parts of the stream will be lost and image
-            array will be corrupted. 
+            larger that 1MB, exceeding parts still would right to the file without 
+            data corruption.
             """
+            data = self.rfile.readlines()
+
             iteration, uuid, buffer = 0, None, bytearray()
-            while len(buffer) < FILE_LIMIT_1MB:
-                data = self.request.recv(4096).strip()
+            for line in data:
                 if iteration == 0:
-                    uuid = data[:36].decode('utf-8')
-                    data = data[36:]
+                    uuid = line[:36].decode('utf-8')
+                    line = line[36:]
 
-                if not data:
-                    break
-
-                buffer.extend(data)
+                buffer.extend(line)
                 iteration += 1
 
             image = Image.open(io.BytesIO(buffer))
@@ -60,10 +57,10 @@ class TCPRequestHandler(socketserver.BaseRequestHandler):
             Respond to the movement came from the UI. With this response, chess
             board will be updated.
             """
-            self.request.sendall(movement.response())
+            self.wfile.write(movement.response())
 
         except (RuntimeError, ConnectionResetError) as ex:
-            print(f'Runtime error: {ex.message}')
+            print(f'Runtime error: {ex}')
 
 
 def init():

@@ -67,11 +67,6 @@ public class MovementController {
                     Optional.ofNullable(file.getOriginalFilename()).orElse("<NoFileName>"),
                     file.getBytes().length));
 
-            var response = serverComponent.read();
-            System.out.println(response);
-
-            System.out.println("Response received");
-
             return ResponseEntity.ok().build();
         } catch (IOException ex) {
             LOGGER.error(INFO_FILE_PUSH_FAILED.message(), ex);
