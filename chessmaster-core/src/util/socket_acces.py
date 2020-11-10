@@ -1,4 +1,4 @@
-#!/usr/bin/env
+#!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 
 import io
@@ -7,6 +7,7 @@ import socketserver
 from PIL import Image
 
 from model.qlearning import MovementHandler
+from .api_access import NextMove
 
 HOST, PORT = ('localhost', 16375)
 
@@ -57,7 +58,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
             Respond to the movement came from the UI. With this response, chess
             board will be updated.
             """
-            self.wfile.write(movement.response())
+            NextMove(movement.response).move()
 
         except (RuntimeError, ConnectionResetError) as ex:
             print(f'Runtime error: {ex}')

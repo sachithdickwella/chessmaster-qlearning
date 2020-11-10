@@ -1,16 +1,17 @@
 package com.traviard.chessmaster.endpoint;
 
 import com.traviard.chessmaster.component.StaticClientComponent;
+import com.traviard.chessmaster.util.NextMove;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.helpers.BasicMarker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -72,5 +73,18 @@ public class MovementController {
             LOGGER.error(INFO_FILE_PUSH_FAILED.message(), ex);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
+    }
+
+    /**
+     * Catch the next movement location of the chess picess from the downstream invoke
+     * of this endpoint.
+     *
+     * @param nextMove of {@link NextMove} instance make the UI update.
+     * @return instance of {@link ResponseEntity} to tell the next move submit status.
+     */
+    @PostMapping(path = "/next", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> nextMove(@RequestBody NextMove nextMove) {
+        LOGGER.info(nextMove.toString());
+        return ResponseEntity.ok().build();
     }
 }
