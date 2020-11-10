@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
@@ -64,14 +63,6 @@ public class StaticClientComponent {
              * Write the uuid and image stream to the downstream program and flush.
              */
             channel.write(ByteBuffer.wrap(sequenceStream.readAllBytes()));
-
-            Socket s = channel.socket();
-            int count = s.getInputStream().read();
-
-            /*ByteBuffer buffer = ByteBuffer.allocate(256);
-            channel.read(buffer);*/
-
-            System.out.println(count);
         }
     }
 }
