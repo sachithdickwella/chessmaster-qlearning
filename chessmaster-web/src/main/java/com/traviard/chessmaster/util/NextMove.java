@@ -29,7 +29,7 @@ public class NextMove {
     @Override
     public String toString() {
         return new StringJoiner(", ", NextMove.class.getSimpleName() + "[", "]")
-                .add("uuid='" + _id + "'")
+                .add("_id='" + _id + "'")
                 .add("move='" + move + "'")
                 .toString();
     }
