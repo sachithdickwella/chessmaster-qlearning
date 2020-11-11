@@ -2,7 +2,7 @@ package com.traviard.chessmaster.endpoint;
 
 import com.traviard.chessmaster.component.StaticClientComponent;
 import com.traviard.chessmaster.util.NextMove;
-import org.apache.tomcat.util.buf.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +76,7 @@ public class MovementController {
                     .filter(cookie -> cookie.getName().equalsIgnoreCase("JSESSIONID"))
                     .map(Cookie::getValue)
                     .findAny()
-                    .orElse("");
+                    .orElse(StringUtils.EMPTY);
 
             serverComponent.write(id, file.getInputStream());
             LOGGER.info(INFO_FILE_PUSH_SUCCESS.message(
