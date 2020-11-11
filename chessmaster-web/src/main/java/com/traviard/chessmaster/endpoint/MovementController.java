@@ -2,19 +2,22 @@ package com.traviard.chessmaster.endpoint;
 
 import com.traviard.chessmaster.component.StaticClientComponent;
 import com.traviard.chessmaster.util.NextMove;
+import org.apache.tomcat.util.buf.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.Marker;
-import org.slf4j.helpers.BasicMarker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Optional;
 
 import static com.traviard.chessmaster.util.LogMessages.INFO_FILE_PUSH_FAILED;
@@ -40,6 +43,10 @@ public class MovementController {
      * to push content.
      */
     private final StaticClientComponent serverComponent;
+    /**
+     * Instance of {@link SimpMessagingTemplate} to send messages.
+     */
+    private final SimpMessagingTemplate template;
 
     /**
      * Single-arg constructor to initialize {@link #serverComponent} local member to work
@@ -48,8 +55,10 @@ public class MovementController {
      * @param serverComponent which inject by the Application Context.
      */
     @Autowired
-    public MovementController(@NotNull StaticClientComponent serverComponent) {
+    public MovementController(@NotNull StaticClientComponent serverComponent,
+                              @NotNull SimpMessagingTemplate template) {
         this.serverComponent = serverComponent;
+        this.template = template;
     }
 
     /**
@@ -60,8 +69,15 @@ public class MovementController {
      * @return instance of {@link ResponseEntity} to tell the file upload status.
      */
     @PostMapping(path = "/grab", consumes = MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> grabImage(@RequestParam("id") String id, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Void> grabImage(@RequestParam("file") MultipartFile file,
+                                          @NotNull HttpServletRequest request) {
         try {
+            String id = Arrays.stream(request.getCookies())
+                    .filter(cookie -> cookie.getName().equalsIgnoreCase("JSESSIONID"))
+                    .map(Cookie::getValue)
+                    .findAny()
+                    .orElse("");
+
             serverComponent.write(id, file.getInputStream());
             LOGGER.info(INFO_FILE_PUSH_SUCCESS.message(
                     id,
@@ -84,6 +100,8 @@ public class MovementController {
      */
     @PostMapping(path = "/next", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> nextMove(@RequestBody NextMove nextMove) {
+        template.convertAndSend("/topic/next", nextMove);
+
         LOGGER.info(nextMove.toString());
         return ResponseEntity.ok().build();
     }

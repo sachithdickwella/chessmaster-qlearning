@@ -22,9 +22,10 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         override the handle() method to implement communication to the
         client.
         """
+        _id_length = 32
         try:
             """
-            Capture the UUID from the client program to distinguish which UI
+            Capture the ID from the client program to distinguish which UI
             instance send the request to the model. 
 
             Capture the image into a :func:`~bytearray()` hence, file receives
@@ -37,11 +38,11 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
             """
             data = self.rfile.readlines()
 
-            iteration, uuid, buffer = 0, None, bytearray()
+            iteration, _id, buffer = 0, None, bytearray()
             for line in data:
                 if iteration == 0:
-                    uuid = line[:36].decode('utf-8')
-                    line = line[36:]
+                    _id = line[:_id_length].decode('utf-8')
+                    line = line[_id_length:]
 
                 buffer.extend(line)
                 iteration += 1
@@ -53,7 +54,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
             to the same socket as a response to this move and client take care 
             of the rest.
             """
-            movement = MovementHandler(uuid, image)
+            movement = MovementHandler(_id, image)
             """
             Respond to the movement came from the UI. With this response, chess
             board will be updated.

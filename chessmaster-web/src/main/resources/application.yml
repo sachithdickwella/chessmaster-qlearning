@@ -5,6 +5,8 @@ spring:
     multipart:
       max-file-size: 1MB
       max-request-size: 1MB
+  main:
+    allow-bean-definition-overriding: true
 
   thymeleaf:
     enabled: true
