@@ -16,7 +16,6 @@ const shot = () => html2canvas(document.querySelector("#board1")).then(canvas =>
 const call = (canvas) => {
     canvas.toBlob((blob) => {
         const form = new FormData()
-        form.append('id', $('#board1').parent('div').attr('id'))
         form.append('file', blob, 'board-frame')
         $.ajax({
             url: '/movement/grab',
@@ -45,5 +44,8 @@ $(() => {
         dropOffBoard: 'trash'
     });
     board.start();
+    /**
+     * Connect to the WebSocket Broker.
+     */
     connect();
 });
