@@ -1,18 +1,33 @@
 let stompClient;
-
+/**
+ * Connect and subscribe a WebSocket. in order to receive server responses from
+ * the model.
+ */
 const connect = () => {
     const socket = new SockJS('/gs-guide-websocket');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, frame => {
         console.debug("Connected:", frame)
-        stompClient.subscribe('/topic/next', next => {
-            console.info(JSON.parse(next.body))
-        });
+        stompClient.subscribe('/session/topic/next', nextMove);
     });
 }
-
+/**
+ * Make the move upon the server response from the model.
+ *
+ * @param next to give in the next move location on the board.
+ */
+const nextMove = (next) => {
+    console.info(JSON.parse(next.body))
+}
+/**
+ * Shoot the chessboard HTML as a canvas and push it to the server end as an image.
+ */
 const shot = () => html2canvas(document.querySelector("#board1")).then(canvas => call(canvas));
-
+/**
+ * Send out the shot out canvas to the backend server as an image/png via AJAX.
+ *
+ * @param canvas of the shot out chessboard.
+ */
 const call = (canvas) => {
     canvas.toBlob((blob) => {
         const form = new FormData()
@@ -37,7 +52,9 @@ const call = (canvas) => {
         })
     }, 'image/png');
 }
-
+/**
+ * JQuery "ready" method to start the client side process and listeners.
+ */
 $(() => {
     const board = ChessBoard('board1', {
         draggable: true,
