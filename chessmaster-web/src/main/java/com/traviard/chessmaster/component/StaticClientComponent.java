@@ -3,8 +3,9 @@ package com.traviard.chessmaster.component;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.SessionScope;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -28,7 +29,7 @@ import java.util.List;
  * @author Sachith Dickwella
  */
 @PropertySource("classpath:app-config.properties")
-@Scope("prototype")
+@SessionScope(proxyMode = ScopedProxyMode.TARGET_CLASS)
 @Component
 public class StaticClientComponent {
 

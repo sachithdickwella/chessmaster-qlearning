@@ -10,7 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -100,7 +104,18 @@ public class MovementController {
      */
     @PostMapping(path = "/next", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> nextMove(@RequestBody NextMove nextMove) {
-        template.convertAndSend("/topic/next", nextMove);
+        final String sessionId = nextMove.get_id();
+
+        final SimpMessageHeaderAccessor accessor = SimpMessageHeaderAccessor
+                .create(SimpMessageType.MESSAGE);
+        // accessor.setContentType(MimeTypeUtils.APPLICATION_JSON);
+        accessor.setSessionId(sessionId);
+        accessor.setLeaveMutable(true);
+
+        template.convertAndSendToUser(sessionId,
+                "/topic/next",
+                nextMove,
+                accessor.getMessageHeaders());
 
         LOGGER.info(nextMove.toString());
         return ResponseEntity.ok().build();
