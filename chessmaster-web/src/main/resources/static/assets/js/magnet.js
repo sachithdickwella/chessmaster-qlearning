@@ -8,7 +8,7 @@ const connect = () => {
     stompClient = Stomp.over(socket);
     stompClient.connect({}, frame => {
         console.debug("Connected:", frame)
-        stompClient.subscribe('/session/topic/next', nextMove);
+        stompClient.subscribe(`/session/${document.cookie.match('SID=([A-F0-9]+)(?:;)?')[1]}/topic/next`, nextMove);
     });
 }
 /**
@@ -22,13 +22,13 @@ const nextMove = (next) => {
 /**
  * Shoot the chessboard HTML as a canvas and push it to the server end as an image.
  */
-const shot = () => html2canvas(document.querySelector("#board1")).then(canvas => call(canvas));
+const shot = () => html2canvas(document.querySelector("#board1")).then(canvas => push(canvas));
 /**
  * Send out the shot out canvas to the backend server as an image/png via AJAX.
  *
  * @param canvas of the shot out chessboard.
  */
-const call = (canvas) => {
+const push = (canvas) => {
     canvas.toBlob((blob) => {
         const form = new FormData()
         form.append('file', blob, 'board-frame')

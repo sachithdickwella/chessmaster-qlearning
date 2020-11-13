@@ -94,7 +94,7 @@ public class MovementController {
     }
 
     /**
-     * Catch the next movement location of the chess picess from the downstream invoke
+     * Catch the next movement location of the chess pieces from the downstream invoke
      * of this endpoint.
      *
      * @param nextMove of {@link NextMove} instance make the UI update.
