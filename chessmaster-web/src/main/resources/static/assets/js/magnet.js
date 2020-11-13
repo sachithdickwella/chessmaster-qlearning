@@ -6,9 +6,12 @@ let stompClient;
 const connect = () => {
     const socket = new SockJS('/gs-guide-websocket');
     stompClient = Stomp.over(socket);
-    stompClient.connect({}, frame => {
-        console.debug("Connected:", frame)
-        stompClient.subscribe(`/session/${document.cookie.match('SID=([A-F0-9]+)(?:;)?')[1]}/topic/next`, nextMove);
+    stompClient.connect({}, _ => {
+        const sessionId = socket._transport.url
+            .match('(ws|wss):\\/\\/\\w+(?::[0-9]+)?\\/\\S+\\/[0-9]+\\/(\\w+)\\/websocket')[2]
+
+        document.cookie = `SID=${sessionId}; SameSite=strict; path=/`
+        stompClient.subscribe('/user/queue/next', nextMove);
     });
 }
 /**

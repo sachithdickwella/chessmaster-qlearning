@@ -13,15 +13,20 @@ import java.util.StringJoiner;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class NextMove {
+
     /**
-     * UUID of the image originally
-     * send the frame to the model.
+     * UUID of the image originally send the frame to the model.
      */
     @SuppressWarnings("java:S116")
     private String _id;
     /**
-     * Response from the model that
-     * states how the UI pieces should
+     * Target web socket session id which the model response should
+     * be sent up to.
+     */
+    @SuppressWarnings("java:S116")
+    private String _wsid;
+    /**
+     * Response from the model that states how the UI pieces should
      * be moved.
      */
     private String move;
@@ -30,6 +35,7 @@ public class NextMove {
     public String toString() {
         return new StringJoiner(", ", NextMove.class.getSimpleName() + "[", "]")
                 .add("_id='" + _id + "'")
+                .add("_wsid=" + _wsid + "'")
                 .add("move='" + move + "'")
                 .toString();
     }

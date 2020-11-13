@@ -49,14 +49,16 @@ public class StaticClientComponent {
      * the UUID came from the UI.
      *
      * @param id          of the UI as a {@link java.util.UUID} instance.
+     * @param wsid        which contains the websocket session id as a {@link String}.
      * @param imageStream object came from UI multipart upload.
      * @throws IOException if the downstream push fails.
      */
-    public void write(@NotNull String id, @NotNull InputStream imageStream) throws IOException {
+    public void write(@NotNull String id, @NotNull String wsid, @NotNull InputStream imageStream) throws IOException {
         try (SocketChannel channel = SocketChannel.open(new InetSocketAddress(host, port));
              var sequenceStream = new SequenceInputStream(Collections.enumeration(
                      List.of(
                              new ByteArrayInputStream(id.getBytes(StandardCharsets.UTF_8)),
+                             new ByteArrayInputStream(wsid.getBytes(StandardCharsets.UTF_8)),
                              imageStream
                      ))
              )) {

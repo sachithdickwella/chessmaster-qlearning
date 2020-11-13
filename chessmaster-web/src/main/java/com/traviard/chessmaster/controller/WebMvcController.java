@@ -12,13 +12,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.context.annotation.SessionScope;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
-import java.util.Optional;
-import java.util.regex.Pattern;
-
-import static java.util.regex.Pattern.CASE_INSENSITIVE;
-
 /**
  * @author Sachith Dickwella
  */
@@ -27,10 +20,6 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 @Controller
 public class WebMvcController {
 
-    /**
-     * Pattern to derive {@code JSESSIONID} from the response header.
-     */
-    private static final Pattern SID_PATTERN = Pattern.compile("JSESSIONID=([0-9A-F]+)(?:;)?", CASE_INSENSITIVE);
     /**
      * Application title in {@link String}.
      */
@@ -65,24 +54,11 @@ public class WebMvcController {
     /**
      * Model mapping for the home/main page.
      *
-     * @param model    Instance of {@link Model} set outbound model content.
-     * @param response instance of {@link HttpServletResponse} to get outbound session info.
+     * @param model Instance of {@link Model} set outbound model content.
      * @return the {@link String} of the page name.
      */
     @GetMapping(path = {"/", "index", "index.html"})
-    public String index(@NotNull Model model, @NotNull HttpServletResponse response) {
-        Optional.ofNullable(response.getHeader("Set-Cookie"))
-                .ifPresent(content -> {
-                    var matcher = SID_PATTERN.matcher(content);
-                    if (matcher.find()) {
-                        Cookie sidCookie = new Cookie("SID", matcher.group(1));
-                        sidCookie.setPath("/");
-                        sidCookie.setSecure(true);
-
-                        response.addCookie(sidCookie);
-                    }
-                });
-
+    public String index(@NotNull Model model) {
         model.addAttribute("title", appHomeTitle);
         return "index";
     }
