@@ -38,7 +38,6 @@ public class WebSocketConfig extends AbstractSessionWebSocketMessageBrokerConfig
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic", "/queue");
         registry.setApplicationDestinationPrefixes("/app");
-        registry.setUserDestinationPrefix("/session");
         /*
          * To keep message processing order in the same session.
          */

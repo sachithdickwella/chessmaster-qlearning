@@ -27,4 +27,3 @@ class NextMove(object):
             print("Response success with HTTP 200")
         else:
             print(f"Response failed with HTTP {req.status_code}")
-

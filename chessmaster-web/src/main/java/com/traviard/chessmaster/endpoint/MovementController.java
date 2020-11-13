@@ -22,8 +22,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 
-import static com.traviard.chessmaster.util.LogMessages.INFO_FILE_PUSH_FAILED;
-import static com.traviard.chessmaster.util.LogMessages.INFO_FILE_PUSH_SUCCESS;
+import static com.traviard.chessmaster.util.LogMessages.*;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 /**
@@ -74,13 +73,21 @@ public class MovementController {
     public ResponseEntity<Void> grabImage(@RequestParam("file") MultipartFile file,
                                           @NotNull HttpServletRequest request) {
         try {
-            String id = Arrays.stream(request.getCookies())
+            var cookies = request.getCookies();
+
+            var id = Arrays.stream(cookies)
                     .filter(cookie -> cookie.getName().equalsIgnoreCase("JSESSIONID"))
                     .map(Cookie::getValue)
                     .findAny()
                     .orElse(StringUtils.EMPTY);
 
-            serverComponent.write(id, file.getInputStream());
+            var wsid = Arrays.stream(cookies)
+                    .filter(cookie -> cookie.getName().equalsIgnoreCase("SID"))
+                    .map(Cookie::getValue)
+                    .findAny()
+                    .orElse(StringUtils.EMPTY);
+
+            serverComponent.write(id, wsid, file.getInputStream());
             LOGGER.info(INFO_FILE_PUSH_SUCCESS.message(
                     id,
                     Optional.ofNullable(file.getOriginalFilename()).orElse("<NoFileName>"),
@@ -102,7 +109,9 @@ public class MovementController {
      */
     @PostMapping(path = "/next", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> nextMove(@RequestBody NextMove nextMove) {
-        final String sessionId = nextMove.get_id();
+        LOGGER.info(INFO_RESPONSE_FROM_PYTHON_MODEL.message(nextMove));
+
+        final String sessionId = nextMove.get_wsid();
 
         final SimpMessageHeaderAccessor accessor = SimpMessageHeaderAccessor
                 .create(SimpMessageType.MESSAGE);
@@ -110,11 +119,10 @@ public class MovementController {
         accessor.setLeaveMutable(true);
 
         template.convertAndSendToUser(sessionId,
-                "/topic/next",
+                "/queue/next",
                 nextMove,
                 accessor.getMessageHeaders());
 
-        LOGGER.info(nextMove.toString());
         return ResponseEntity.ok().build();
     }
 }

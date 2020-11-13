@@ -22,7 +22,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         override the handle() method to implement communication to the
         client.
         """
-        _id_length = 32
+        _id_length, _wsid_length = (32, 8)
         try:
             """
             Capture the ID from the client program to distinguish which UI
@@ -38,11 +38,13 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
             """
             data = self.rfile.readlines()
 
-            iteration, _id, buffer = 0, None, bytearray()
+            iteration, _id, _wsid, buffer = (0, None, 0, bytearray())
             for line in data:
                 if iteration == 0:
                     _id = line[:_id_length].decode('utf-8')
-                    line = line[_id_length:]
+                    _wsid = line[_id_length: _id_length + _wsid_length].decode('utf-8')
+
+                    line = line[_id_length + _wsid_length:]
 
                 buffer.extend(line)
                 iteration += 1
@@ -54,7 +56,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
             to the same socket as a response to this move and client take care 
             of the rest.
             """
-            movement = MovementHandler(_id, image)
+            movement = MovementHandler(_id, _wsid, image)
             """
             Respond to the movement came from the UI. With this response, chess
             board will be updated.
