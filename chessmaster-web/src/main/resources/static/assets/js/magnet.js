@@ -26,7 +26,7 @@ const nextMove = (next) => {
 /**
  * The event of new move by the user.
  */
-const onDrop = (source, target, piece, newPos, oldPos, orientation) => shot();
+const onDrop = (source, target, piece, newPos, oldPos, orientation) => setTimeout(shot, 500);
 /**
  * Shoot the chessboard HTML as a canvas and push it to the server end as an image.
  */
