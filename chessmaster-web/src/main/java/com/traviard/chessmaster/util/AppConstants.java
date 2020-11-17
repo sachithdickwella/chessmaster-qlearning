@@ -1,0 +1,44 @@
+package com.traviard.chessmaster.util;
+
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * @author Sachith Dickwella
+ */
+public enum AppConstants {
+
+    /**
+     * Create session command message.
+     */
+    CREATE_SESSION("create"),
+    /**
+     * Invalidate session command message.
+     */
+    INVALIDATE_SESSION("invalidate");
+
+    /**
+     * Local variable to keep {@code constance} command or
+     * {@link String} value.
+     */
+    private final String constant;
+
+    /**
+     * Private single-arg constructor to initialize {@link #constant}
+     * local-member.
+     *
+     * @param constant to be initialize with enum value.
+     */
+    AppConstants(@NotNull String constant) {
+        this.constant = constant;
+    }
+
+    /**
+     * Get the initialized {@link #constant} value.
+     *
+     * @return the value of {@link #constant}.
+     */
+    @NotNull
+    public String constant() {
+        return this.constant;
+    }
+}

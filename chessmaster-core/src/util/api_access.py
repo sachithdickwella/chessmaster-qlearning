@@ -8,7 +8,7 @@ class NextMove(object):
     """
     This :func: NextMove class uses to invoke UI managed REST endpoint call
     to send the model response values to the UI, so the Java program can update
-    the UI accordingly.
+    the UI accordingly. This is a stateless class.
     """
     def __init__(self, movement):
         """
@@ -21,7 +21,7 @@ class NextMove(object):
         self.url = f"http://{self.host}:{self.port}/movement/next"
         self.movement = movement
 
-    def move(self):
+    def send(self):
         req = requests.post(self.url, data=self.movement(), headers={'Content-Type': 'application/json'})
         if req.status_code == 200:
             print("Response success with HTTP 200")

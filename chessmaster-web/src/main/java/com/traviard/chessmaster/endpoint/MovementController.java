@@ -50,10 +50,11 @@ public class MovementController {
     private final SimpMessagingTemplate template;
 
     /**
-     * Single-arg constructor to initialize {@link #serverComponent} local member to work
-     * with file push to Python model.
+     * Single-arg constructor to initialize {@link #serverComponent} local member
+     * to work with file push to Python model.
      *
      * @param serverComponent which inject by the Application Context.
+     * @param template        to send WebSocket responses initiate by the server.
      */
     @Autowired
     public MovementController(@NotNull StaticClientComponent serverComponent,
@@ -72,21 +73,22 @@ public class MovementController {
     @PostMapping(path = "/grab", consumes = MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> grabImage(@RequestParam("file") MultipartFile file,
                                           @NotNull HttpServletRequest request) {
+
+        var cookies = request.getCookies();
+
+        var id = Arrays.stream(cookies)
+                .filter(cookie -> cookie.getName().equalsIgnoreCase("JSESSIONID"))
+                .map(Cookie::getValue)
+                .findAny()
+                .orElse(StringUtils.EMPTY);
+
+        var wsid = Arrays.stream(cookies)
+                .filter(cookie -> cookie.getName().equalsIgnoreCase("SID"))
+                .map(Cookie::getValue)
+                .findAny()
+                .orElse(StringUtils.EMPTY);
+
         try {
-            var cookies = request.getCookies();
-
-            var id = Arrays.stream(cookies)
-                    .filter(cookie -> cookie.getName().equalsIgnoreCase("JSESSIONID"))
-                    .map(Cookie::getValue)
-                    .findAny()
-                    .orElse(StringUtils.EMPTY);
-
-            var wsid = Arrays.stream(cookies)
-                    .filter(cookie -> cookie.getName().equalsIgnoreCase("SID"))
-                    .map(Cookie::getValue)
-                    .findAny()
-                    .orElse(StringUtils.EMPTY);
-
             serverComponent.write(id, wsid, file.getInputStream());
             LOGGER.info(INFO_FILE_PUSH_SUCCESS.message(
                     id,
@@ -95,7 +97,7 @@ public class MovementController {
 
             return ResponseEntity.ok().build();
         } catch (IOException ex) {
-            LOGGER.error(INFO_FILE_PUSH_FAILED.message(), ex);
+            LOGGER.error(ERROR_FILE_PUSH_FAILED.message(id), ex);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
     }
