@@ -54,7 +54,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
                 else:
                     self.receive_frames(data)
 
-        except (RuntimeError, ConnectionResetError) as ex:
+        except (RuntimeError, ConnectionResetError, KeyError) as ex:
             print(f'Runtime error: {ex}')
 
         print(SESSIONS)
@@ -86,10 +86,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         to receive the model response to move the chess pieces. Then write
         to the same socket as a response to this move and client take care 
         of the rest.
-        """
-        if SESSIONS.get(_id) is None:
-            SESSIONS[_id] = MovementHandler(_id)
-        """
+        
         Call the :func: 'accept()' to add the '_wsid' and 'image' to the model 
         on each invocation due to different frames.
 
@@ -112,7 +109,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
 
         :param _id: Session id from the upstream Java Web program.
         """
-        SESSIONS[_id] = None
+        SESSIONS[_id] = MovementHandler(_id)
 
     @staticmethod
     def invalidate_session(_id):
@@ -122,10 +119,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
 
         :param _id: Session id from the upstream Java Web program.
         """
-        try:
-            del SESSIONS[_id]
-        except KeyError as ex:
-            print(f'Runtime error: {ex}')
+        del SESSIONS[_id]
 
     @staticmethod
     def clean_sessions():
