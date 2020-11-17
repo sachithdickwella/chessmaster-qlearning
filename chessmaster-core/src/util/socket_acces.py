@@ -40,17 +40,24 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
 
             if len(data) > 0:
                 if len(data) == 1:
-                    _id = data[0][:self._id_length].decode('utf-8')
-                    command = data[0][self._id_length:].decode('utf-8')
-                    if command == 'create':
-                        self.create_session(_id)
+                    data = data[0]
+                    if len(data) > self._id_length:
+                        _id = data[:self._id_length].decode('utf-8')
+                        command = data[self._id_length:].decode('utf-8')
+
+                        if command == 'create':
+                            self.create_session(_id)
+                        else:
+                            self.invalidate_session(_id)
                     else:
-                        self.invalidate_session(_id)
+                        self.clean_sessions()
                 else:
                     self.receive_frames(data)
 
-        except (RuntimeError, ConnectionResetError) as ex:
+        except (RuntimeError, ConnectionResetError, KeyError) as ex:
             print(f'Runtime error: {ex}')
+
+        print(SESSIONS)
 
     def receive_frames(self, data):
         """
@@ -79,10 +86,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         to receive the model response to move the chess pieces. Then write
         to the same socket as a response to this move and client take care 
         of the rest.
-        """
-        if SESSIONS.get(_id) is None:
-            SESSIONS[_id] = MovementHandler(_id)
-        """
+        
         Call the :func: 'accept()' to add the '_wsid' and 'image' to the model 
         on each invocation due to different frames.
 
@@ -99,26 +103,31 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
     @staticmethod
     def create_session(_id):
         """
-        Add new element to the static SESSION variable with '_id' as the key and value
+        Add new element to the static SESSIONS variable with '_id' as the key and value
         with None until a request received to create a new 'MovementHandler' instance and
         replace that 'None' value.
 
         :param _id: Session id from the upstream Java Web program.
         """
-        SESSIONS[_id] = None
+        SESSIONS[_id] = MovementHandler(_id)
 
     @staticmethod
     def invalidate_session(_id):
         """
-        Delete the entire entry from SESSION dictionary variable from the '_id' and release
+        Delete the entire entry from SESSIONS dictionary variable from the '_id' and release
         the memory allocated.
 
         :param _id: Session id from the upstream Java Web program.
         """
-        try:
-            del SESSIONS[_id]
-        except KeyError as ex:
-            print(f'Runtime error: {ex}')
+        del SESSIONS[_id]
+
+    @staticmethod
+    def clean_sessions():
+        """
+        Clear out the SESSIONS instance from previously created session ids and 'MovementHandler'
+        objects for save memory.
+        """
+        SESSIONS.clear()
 
 
 def init():

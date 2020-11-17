@@ -33,8 +33,6 @@ class MovementHandler(object):
         return "nextMove"
 
     def response(self):
-        print(f'{self._id} - {self._wsid}')
-
         return """
         {{
             "_id": "{0}",
