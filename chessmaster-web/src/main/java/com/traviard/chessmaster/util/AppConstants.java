@@ -14,7 +14,11 @@ public enum AppConstants {
     /**
      * Invalidate session command message.
      */
-    INVALIDATE_SESSION("invalidate");
+    INVALIDATE_SESSION("invalidate"),
+    /**
+     * Clean all the sessions stored in the dictionary of Python program.
+     */
+    CLEAN_SESSIONS("clean");
 
     /**
      * Local variable to keep {@code constance} command or
