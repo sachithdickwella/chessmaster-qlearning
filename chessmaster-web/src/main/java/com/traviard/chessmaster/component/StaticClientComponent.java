@@ -1,11 +1,10 @@
 package com.traviard.chessmaster.component;
 
+import com.traviard.chessmaster.util.AppConstants;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.SessionScope;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,7 +28,6 @@ import java.util.List;
  * @author Sachith Dickwella
  */
 @PropertySource("classpath:app-config.properties")
-@SessionScope(proxyMode = ScopedProxyMode.TARGET_CLASS)
 @Component
 public class StaticClientComponent {
 
@@ -45,16 +43,40 @@ public class StaticClientComponent {
     private int port;
 
     /**
+     * Send out the command along with the {@code id} to the downstream Python program,
+     * so the program would be able to capture and execute whatever command send out
+     * before the actual objective of the program is required or after the objective of
+     * the program is done.
+     *
+     * @param id      of the UI as a {@link String} instance.
+     * @param command to be executed on downstream program from {@link AppConstants}.
+     */
+    public void write(@NotNull String id, @NotNull AppConstants command) throws IOException {
+        try (var channel = SocketChannel.open(new InetSocketAddress(host, port));
+             var sequenceStream = new SequenceInputStream(Collections.enumeration(
+                     List.of(
+                             new ByteArrayInputStream(id.getBytes(StandardCharsets.UTF_8)),
+                             new ByteArrayInputStream(command.constant().getBytes(StandardCharsets.UTF_8))
+                     ))
+             )) {
+            /*
+             * Write the id and the command stream to the downstream program and flush.
+             */
+            channel.write(ByteBuffer.wrap(sequenceStream.readAllBytes()));
+        }
+    }
+
+    /**
      * Push the downloaded image from UI to the backend Python program as a byte[] with
      * the UUID came from the UI.
      *
-     * @param id          of the UI as a {@link java.util.UUID} instance.
+     * @param id          of the UI as a {@link String} instance.
      * @param wsid        which contains the websocket session id as a {@link String}.
      * @param imageStream object came from UI multipart upload.
      * @throws IOException if the downstream push fails.
      */
     public void write(@NotNull String id, @NotNull String wsid, @NotNull InputStream imageStream) throws IOException {
-        try (SocketChannel channel = SocketChannel.open(new InetSocketAddress(host, port));
+        try (var channel = SocketChannel.open(new InetSocketAddress(host, port));
              var sequenceStream = new SequenceInputStream(Collections.enumeration(
                      List.of(
                              new ByteArrayInputStream(id.getBytes(StandardCharsets.UTF_8)),
@@ -63,7 +85,7 @@ public class StaticClientComponent {
                      ))
              )) {
             /*
-             * Write the uuid and image stream to the downstream program and flush.
+             * Write the id and image stream to the downstream program and flush.
              */
             channel.write(ByteBuffer.wrap(sequenceStream.readAllBytes()));
         }

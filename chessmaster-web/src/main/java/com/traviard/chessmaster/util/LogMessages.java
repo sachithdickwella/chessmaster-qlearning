@@ -15,13 +15,17 @@ public enum LogMessages {
      */
     INFO_FILE_PUSH_SUCCESS("{}: '{}' pushed to client queue - {} bytes"),
     /**
-     * When the file push to client queue is fails.
-     */
-    INFO_FILE_PUSH_FAILED("Uploaded file push is failed with java.io.IOException"),
-    /**
      * When the response from Python model has arrived.
      */
-    INFO_RESPONSE_FROM_PYTHON_MODEL("Response from the Python model: {}");
+    INFO_RESPONSE_FROM_PYTHON_MODEL("Response from the Python model: {}"),
+    /**
+     * When the file push to client queue is fails.
+     */
+    ERROR_FILE_PUSH_FAILED("Uploaded file push is failed for id {} with java.io.IOException"),
+    /**
+     * When the command push to client queue is fails.
+     */
+    ERROR_COMMAND_PUSH_FAILED("Command push is failed for id {} with java.io.IOException");
     /**
      * Rendered message with {@link String#format(String, Object...)} in the
      * constructor.
