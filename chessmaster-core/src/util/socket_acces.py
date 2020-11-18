@@ -6,7 +6,7 @@ import socketserver
 
 from PIL import Image
 
-from model.qlearning import MovementHandler
+from model.controller import MovementHandler
 from .api_access import NextMove
 
 HOST, PORT, SESSIONS = ('localhost', 16375, dict())
