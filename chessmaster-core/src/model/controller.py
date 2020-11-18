@@ -2,9 +2,12 @@
 # -*- encoding: utf-8 -*-
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 from torchvision import transforms as T
+
+BUILD_PATH = '../build'
+IMAGE_PATH = f'{BUILD_PATH}/out'
+DUMP_PATH = f'{BUILD_PATH}/dump'
 
 
 class MovementHandler(object):
@@ -19,14 +22,14 @@ class MovementHandler(object):
         ])
 
     def accept(self, _wsid, image):
+        image.save(f'{IMAGE_PATH}/{self._id}.png')
+
         self._wsid = _wsid
         self.result = self.model_invoke(image)
 
     def model_invoke(self, frame):
         frame = np.array(frame, dtype=np.uint8)
         frame = cv2.cvtColor(frame, code=cv2.COLOR_RGBA2RGB)
-
-        plt.imsave(fname=f'test_{self._id}.png', arr=frame)
 
         frame = self.transform(frame)
 

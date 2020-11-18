@@ -57,8 +57,6 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         except (RuntimeError, ConnectionResetError, KeyError) as ex:
             print(f'Runtime error: {ex}')
 
-        print(SESSIONS)
-
     def receive_frames(self, data):
         """
         Receives the images/frames from this method. Just pass the entire list
