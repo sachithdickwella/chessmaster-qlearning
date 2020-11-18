@@ -6,7 +6,7 @@ import socketserver
 
 from PIL import Image
 
-from model.qlearning import MovementHandler
+from model.controller import MovementHandler
 from .api_access import NextMove
 
 HOST, PORT, SESSIONS = ('localhost', 16375, dict())
@@ -56,8 +56,6 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
 
         except (RuntimeError, ConnectionResetError, KeyError) as ex:
             print(f'Runtime error: {ex}')
-
-        print(SESSIONS)
 
     def receive_frames(self, data):
         """
