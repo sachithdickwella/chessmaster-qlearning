@@ -4,9 +4,7 @@ import cv2
 import numpy as np
 from torchvision import transforms as T
 
-BUILD_PATH = '../build'
-IMAGE_PATH = f'{BUILD_PATH}/out'
-LOG_PATH = f'{BUILD_PATH}/log'
+from util import IMAGE_PATH
 
 
 class MovementHandler(object):
