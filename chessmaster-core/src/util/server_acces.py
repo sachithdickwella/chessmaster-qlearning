@@ -1,13 +1,14 @@
-#!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 
 import io
 import socketserver
+from multiprocessing import Manager, Process
 
 from PIL import Image
+from requests.exceptions import ConnectionError
 
 from model.controller import MovementHandler
-from .api_access import NextMove
+from .api_access import NextMove, RefreshSessions
 
 HOST, PORT, SESSIONS = ('localhost', 16375, dict())
 
@@ -128,7 +129,46 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         SESSIONS.clear()
 
 
+def add_session(D, _id):  # NOSONAR
+    """
+    Add the parameter '_id' to the global variable 'SESSION' with
+    new 'MovementHandler' instances.
+
+    :param D: Dictionary object to insert the element of _id and new
+    instance of 'MovementHandler'.
+    :param _id: session id to insert into the 'SESSION' dictionary.
+    """
+    D[_id] = MovementHandler(_id)
+
+
 def init():
+    """
+    Retrieve session ids from the front-end Java application and store on global 'SESSIONS'
+    object with new 'MovementHandler' instance for each.
+    """
+    try:
+        session_ids = RefreshSessions().retrieve()
+        """
+        Add 'session ids' from the 'session_ids' list to the global 'SESSIONS' instance as 
+        a parallel instances.  
+        """
+        with Manager() as manager:
+            D = manager.dict()  # NOSONAR
+
+            ps = []
+            for _id in session_ids:
+                p = Process(target=add_session, args=(D, _id))
+                p.start()
+
+                ps.append(p)
+            for p in ps:
+                p.join()
+
+            SESSIONS.update(D)
+    except ConnectionError:
+        print("REST endpoints for SESSION info are not accessible. Proceed with initial SESSION values.")
+    finally:
+        print("Initial SESSION information are :", list(SESSIONS.keys()) if len(SESSIONS.items()) > 0 else "EMPTY")
     """
     Initialize the 'server socket' to communicate with the Java client application.
     This program act as the server program hence, here resides the Q-Learning model.
