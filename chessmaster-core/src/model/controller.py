@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 
 import cv2
@@ -7,7 +6,7 @@ from torchvision import transforms as T
 
 BUILD_PATH = '../build'
 IMAGE_PATH = f'{BUILD_PATH}/out'
-DUMP_PATH = f'{BUILD_PATH}/dump'
+LOG_PATH = f'{BUILD_PATH}/log'
 
 
 class MovementHandler(object):
