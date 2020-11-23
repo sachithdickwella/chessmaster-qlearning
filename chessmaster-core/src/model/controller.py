@@ -32,7 +32,7 @@ class MovementHandler(object):
         frame = np.array(frame, dtype=np.uint8)
         frame = cv2.cvtColor(frame, code=cv2.COLOR_RGBA2RGB)
 
-        frame = self.transform(frame)
+        frame = self.transform(frame) #
 
         return "nextMove"
 
