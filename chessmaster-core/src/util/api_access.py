@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 import requests
+from .utility import LOGGER
 
 HOST, PORT = 'localhost', 8081
 
@@ -54,5 +55,6 @@ class NextMove(object):
         Invoke the REST endpoint to send the details of next chess piece move which
         recognized by the the
         """
-        res = requests.post(self.url, data=self.movement(), headers={'Content-Type': 'application/json'})
-        print(f'HTTP Response Code {res.status_code}')
+        model_response = self.movement()
+        res = requests.post(self.url, data=model_response, headers={'Content-Type': 'application/json'})
+        LOGGER.info(f'HTTP Response Code {res.status_code} : {model_response}')

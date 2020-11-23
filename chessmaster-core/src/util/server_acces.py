@@ -9,6 +9,7 @@ from requests.exceptions import ConnectionError
 
 from model.controller import MovementHandler
 from .api_access import NextMove, RefreshSessions
+from .utility import LOGGER
 
 HOST, PORT, SESSIONS = ('localhost', 16375, dict())
 
@@ -56,7 +57,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
                     self.receive_frames(data)
 
         except (RuntimeError, ConnectionResetError, KeyError) as ex:
-            print(f'Runtime error: {ex}')
+            LOGGER.error(f'Runtime error: {ex}')
 
     def receive_frames(self, data):
         """
@@ -80,6 +81,9 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
             iteration += 1
 
         image = Image.open(io.BytesIO(buffer))
+        LOGGER.info(
+            f'New frame received for the session id {_id} with the size of {len(buffer)} bytes, and return '
+            f'websocket is "{_wsid}"')
         """
         Keep the :func:`~MovementHandler` object in the thread, in order 
         to receive the model response to move the chess pieces. Then write
@@ -109,6 +113,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         :param _id: Session id from the upstream Java Web program.
         """
         SESSIONS[_id] = MovementHandler(_id)
+        LOGGER.info(f'New session created with id {_id}')
 
     @staticmethod
     def invalidate_session(_id):
@@ -119,6 +124,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         :param _id: Session id from the upstream Java Web program.
         """
         del SESSIONS[_id]
+        LOGGER.info(f'Session invalidated for the id {_id}')
 
     @staticmethod
     def clean_sessions():
@@ -127,6 +133,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         objects for save memory.
         """
         SESSIONS.clear()
+        LOGGER.info(f'Cleared out all the sessions in the context')
 
 
 def add_session(D, _id):  # NOSONAR
@@ -165,10 +172,12 @@ def init():
                 p.join()
 
             SESSIONS.update(D)
+            del D  # Retain the memory by deleting old dictionary from 'manager'.
     except ConnectionError:
-        print("REST endpoints for SESSION info are not accessible. Proceed with initial SESSION values.")
+        LOGGER.warning("REST endpoints for SESSION info are not accessible. Proceed with initial SESSION values.")
     finally:
-        print("Initial SESSION information are :", list(SESSIONS.keys()) if len(SESSIONS.items()) > 0 else "EMPTY")
+        LOGGER.info(
+            f"Initial SESSION information are: {list(SESSIONS.keys()) if len(SESSIONS.items()) > 0 else 'EMPTY'}")
     """
     Initialize the 'server socket' to communicate with the Java client application.
     This program act as the server program hence, here resides the Q-Learning model.
@@ -179,4 +188,5 @@ def init():
     should be changed during the deployment.
     """
     with socketserver.TCPServer((HOST, PORT), TCPRequestHandler) as server:
+        LOGGER.info(f'Server socket listener started at {HOST} on port {PORT}')
         server.serve_forever()
