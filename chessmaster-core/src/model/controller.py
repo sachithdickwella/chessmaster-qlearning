@@ -5,6 +5,7 @@ import numpy as np
 from torchvision import transforms as T
 
 from util import IMAGE_PATH
+from util.utility import LOGGER
 
 
 class MovementHandler(object):
@@ -19,7 +20,10 @@ class MovementHandler(object):
         ])
 
     def accept(self, _wsid, image):
-        image.save(f'{IMAGE_PATH}/{self._id}.png')
+        path = f'{IMAGE_PATH}/{self._id}.png'
+        image.save(path)
+
+        LOGGER.info(f'Incoming frame saved on {path} for later reference')
 
         self._wsid = _wsid
         self.result = self.model_invoke(image)

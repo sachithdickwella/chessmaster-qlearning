@@ -1,18 +1,23 @@
 # -*- encoding: utf-8 -*-
 
-import os
-import yaml
-import logging
+import logging.handlers
 import logging.config
+import sys
 
 from . import LOG_PATH, LOG_FILENAME
 
+FORMAT = '%(asctime)s %(levelname)-8s  %(thread)d --- [%(threadName)s] %(filename)s : %(message)s'
+LEVEL = logging.DEBUG
+FORMATTER = logging.Formatter(FORMAT)
 
-class Logger(logging.Logger):
+logging.basicConfig(format=FORMAT, level=LEVEL, stream=sys.stdout)
 
-    def __init__(self, name='default', level=logging.DEBUG):
-        super().__init__(name, level)
+file = logging.handlers.RotatingFileHandler(filename=f'{LOG_PATH}/{LOG_FILENAME}',
+                                            maxBytes=10240,
+                                            backupCount=3,
+                                            encoding='utf-8')
+file.setLevel(LEVEL)
+file.setFormatter(FORMATTER)
 
-        config = yaml.load('../../resources/logging_config.yml')
-        config.setdefault()
-        logging.config.dictConfig(config)
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(file)
