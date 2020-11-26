@@ -6,6 +6,7 @@ from collections import namedtuple, OrderedDict
 import torch.nn as nn
 
 TRANSITIONS = namedtuple('Transitions', ['state', 'action', 'next_state', 'reward'])
+PIECES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'r1', 'k1', 'b1', 'king', 'queen', 'b2', 'k2', 'r1']
 
 
 class ReplayMemory(object):
@@ -76,7 +77,11 @@ class DQE(nn.Module):
             w = self.conv2d_size_out(w)
 
         self.head = nn.Sequential(
-            nn.Linear(in_features=512 * h * w, out_features=20),
+            nn.Linear(in_features=512 * h * w, out_features=256),
+            nn.ReLU(),
+            nn.Linear(in_features=256, out_features=64),
+            nn.ReLU(),
+            nn.Linear(in_features=64, out_features=16),
             nn.LogSoftmax(dim=1)
         )
 
