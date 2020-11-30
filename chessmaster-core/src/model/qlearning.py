@@ -33,7 +33,7 @@ class ReplayMemory(object):
 
 class DeepQNetwork(nn.Module):
 
-    def __init__(self, name, nc=3, height=508, width=512):
+    def __init__(self, name, nc=3, height=512, width=512):
         super(DeepQNetwork, self).__init__()
         self.name = name
         self.checkpoint_file = f'{TEMP_PATH}/{self.name}.pt'
