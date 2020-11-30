@@ -15,6 +15,7 @@ class MovementHandler(object):
         self._wsid, self.result = None, None
         self.transform = T.Compose([
             T.ToPILImage(),
+            T.Resize((512, 512)),
             T.ToTensor(),
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
@@ -32,7 +33,7 @@ class MovementHandler(object):
         frame = np.array(frame, dtype=np.uint8)
         frame = cv2.cvtColor(frame, code=cv2.COLOR_RGBA2RGB)
 
-        frame = self.transform(frame) #
+        frame = self.transform(frame)  # TODO
 
         return "nextMove"
 
