@@ -6,16 +6,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from util import TEMP_PATH
-from util.utility import LOGGER
+from util import TEMP_PATH, LOGGER
 
-TRANSITIONS = namedtuple('Transitions', ['state', 'action', 'next_state', 'reward'])
+TRANSITIONS = namedtuple('Transitions', ['piece', 'state', 'action', 'next_state', 'reward'])
 PIECES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'r1', 'k1', 'b1', 'king', 'queen', 'b2', 'k2', 'r1']
 
 
 class ReplayMemory(object):
 
-    def __init__(self, capacity: int):
+    def __init__(self, capacity=10000):
         self.capacity = capacity
         self.memory = []
         self.position = 0
@@ -23,12 +22,15 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
-    def sample(self, batch_size: int):
+    def sample(self, batch_size=1):
         return np.random.choice(self.memory, batch_size)
 
     def push(self, *args):
-        # do-nothing for now.
-        pass
+        if len(self.memory) < self.capacity:
+            self.memory.append(None)
+
+        self.memory[self.position] = TRANSITIONS(*args)
+        self.position = (self.position + 1) % self.capacity
 
 
 class DeepQNetwork(nn.Module):
@@ -106,3 +108,9 @@ class DeepQNetwork(nn.Module):
     @staticmethod
     def conv2d_size_out(size, kernel_size=5, stride=2):
         return (size - (kernel_size - 1) - 1) // stride + 1
+
+
+class Agent(object):
+
+    def __init__(self):
+        super().__init__()

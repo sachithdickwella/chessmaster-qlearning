@@ -8,8 +8,8 @@ from PIL import Image
 from requests.exceptions import ConnectionError
 
 from model.controller import MovementHandler
+from . import LOGGER
 from .api_access import NextMove, RefreshSessions
-from .utility import LOGGER
 
 HOST, PORT, SESSIONS = ('localhost', 16375, dict())
 

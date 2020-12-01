@@ -4,8 +4,7 @@ import cv2
 import numpy as np
 from torchvision import transforms as T
 
-from util import IMAGE_PATH
-from util.utility import LOGGER
+from util import IMAGE_PATH, LOGGER
 
 
 class MovementHandler(object):
@@ -38,10 +37,10 @@ class MovementHandler(object):
         return "nextMove"
 
     def response(self):
-        return """
+        return f"""
         {{
-            "_id": "{0}",
-            "_wsid": "{1}",
-            "move": "{2}"
+            "_id": "{self._id}",
+            "_wsid": "{self._wsid}",
+            "move": "{self.result}"
         }}
-        """.format(self._id, self._wsid, self.result)
+        """
