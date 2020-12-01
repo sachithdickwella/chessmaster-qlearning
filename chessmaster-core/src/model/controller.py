@@ -4,8 +4,7 @@ import cv2
 import numpy as np
 from torchvision import transforms as T
 
-from util import IMAGE_PATH
-from util.utility import LOGGER
+from util import IMAGE_PATH, LOGGER, IMAGE_SIZE
 
 
 class MovementHandler(object):
@@ -15,9 +14,8 @@ class MovementHandler(object):
         self._wsid, self.result = None, None
         self.transform = T.Compose([
             T.ToPILImage(),
-            T.Resize((512, 512)),
-            T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            T.Resize(IMAGE_SIZE),
+            T.ToTensor()
         ])
 
     def accept(self, _wsid, image):
@@ -31,17 +29,20 @@ class MovementHandler(object):
 
     def model_invoke(self, frame):
         frame = np.array(frame, dtype=np.uint8)
-        frame = cv2.cvtColor(frame, code=cv2.COLOR_RGBA2RGB)
+        frame = cv2.cvtColor(frame, code=cv2.COLOR_RGBA2GRAY)
 
         frame = self.transform(frame)  # TODO
+
+        # frame = frame.view(512, -1) * 255 # NOSONAR
+        # Image.fromarray(frame.numpy().astype(np.uint8)).save('test.png')
 
         return "nextMove"
 
     def response(self):
-        return """
+        return f"""
         {{
-            "_id": "{0}",
-            "_wsid": "{1}",
-            "move": "{2}"
+            "_id": "{self._id}",
+            "_wsid": "{self._wsid}",
+            "move": "{self.result}"
         }}
-        """.format(self._id, self._wsid, self.result)
+        """

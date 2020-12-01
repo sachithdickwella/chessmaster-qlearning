@@ -1,7 +1,8 @@
 # -*- encoding: utf-8 -*-
 
 import requests
-from .utility import LOGGER
+
+from . import LOGGER
 
 HOST, PORT = 'localhost', 8081
 
