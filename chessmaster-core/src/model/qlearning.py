@@ -11,6 +11,20 @@ from util import TEMP_PATH, LOGGER
 TRANSITIONS = namedtuple('Transitions', ['piece', 'state', 'action', 'next_state', 'reward'])
 PIECES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'r1', 'k1', 'b1', 'king', 'queen', 'b2', 'k2', 'r1']
 
+BATCH_SIZE = 2
+# Discount factor when offering awards.
+GAMMA = 0.999
+# Epsilon - Determine how the model should take random action. This is the starting value for the
+# epsilon (Rate of random action exploration).
+EPS_START = 0.9
+# Epsilon decay stop at this number.
+EPS_END = 0.5
+# Epsilon decay rate. Smaller this number, epsilon takes time to reach plateau and explore lots of
+# random actions over time. Could you linear decay, squared or any type of decaying method.
+EPS_DECAY = 200
+# Parameter to tell how often should replace the target network.
+TARGET_UPDATE = 10
+
 
 class ReplayMemory(object):
 
@@ -22,7 +36,7 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
-    def sample(self, batch_size=1):
+    def sample(self, batch_size):
         return np.random.choice(self.memory, batch_size)
 
     def push(self, *args):
@@ -35,8 +49,9 @@ class ReplayMemory(object):
 
 class DeepQNetwork(nn.Module):
 
-    def __init__(self, name, nc=3, height=512, width=512):
+    def __init__(self, name, nc=1, height=512, width=512):
         super(DeepQNetwork, self).__init__()
+
         self.name = name
         self.checkpoint_file = f'{TEMP_PATH}/{self.name}.pt'
         self.main = nn.Sequential(OrderedDict([
