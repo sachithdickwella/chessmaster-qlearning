@@ -1,9 +1,11 @@
 # -*- encoding: utf-8 -*-
 
 import cv2
+from torch.utils.data import DataLoader
 from torchvision import transforms as T
 
-from util import IMAGE_PATH, LOGGER, IMAGE_SIZE, ToColor
+from util import IMAGE_PATH, LOGGER, IMAGE_SIZE
+from . import BATCH_SIZE, NUM_WORKER, IS_CUDA, ToColor, ChessBoardDataset
 
 
 class MovementHandler(object):
@@ -17,20 +19,27 @@ class MovementHandler(object):
             T.ToTensor()
         ])
 
-    def accept(self, _wsid, image):
+    def accept(self, _wsid, images):
+        # Save the second image of the incoming array which has the movement update.
         path = f'{IMAGE_PATH}/{self._id}.png'
-        image.save(path)
+        images[1].save(path)
 
         LOGGER.info(f'Incoming frame saved on {path} for later reference')
 
         self._wsid = _wsid
-        self.result = self.model_invoke(image)
+        self.result = self.model_invoke(images)
 
-    def model_invoke(self, frame):
-        frame = self.transform(frame)  # TODO
+    def model_invoke(self, frames):
+        dataset = ChessBoardDataset(frames, self.transform)
+        dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, num_workers=NUM_WORKER, pin_memory=IS_CUDA)
 
-        # frame = frame.view(512, -1) * 255  # NOSONAR
-        # Image.fromarray(frame.numpy().astype(np.uint8)).save('test.png')
+        frame = next(iter(dataloader))  # TODO
+
+        # frame1 = frame[0].view(512, -1) * 255  # NOSONAR
+        # Image.fromarray(frame1.numpy().astype(np.uint8)).save('0.png')
+        #
+        # frame2 = frame[1].view(512, -1) * 255  # NOSONAR
+        # Image.fromarray(frame2.numpy().astype(np.uint8)).save('1.png')
 
         return "nextMove"
 

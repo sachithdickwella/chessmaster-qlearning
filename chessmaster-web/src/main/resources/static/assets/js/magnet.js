@@ -25,12 +25,32 @@ const nextMove = (next) => {
 }
 /**
  * The event of new move by the user.
+ *
+ * @param source of the moved chess piece.
+ * @param target or destination of the moved chess piece.
+ * @param piece name that being moved.
+ * @param newPos FEN (Forsyth–Edwards Notation) string for the new position of the board.
+ * @param oldPos FEN (Forsyth–Edwards Notation) string for the old position of the board.
+ * @param orientation of the board (white/black at below).
  */
-const onDrop = (source, target, piece, newPos, oldPos, orientation) => setTimeout(shot, 500);
+const onDrop = (source, target, piece, newPos, oldPos, orientation) => setTimeout(() => shot(push), 500);
+/**
+ * The event of new move startup by the user.
+ */
+const onDragStart = () => shot(retainBlob);
 /**
  * Shoot the chessboard HTML as a canvas and push it to the server end as an image.
+ *
+ * @param callback of the shot function after successful snapshot.
  */
-const shot = () => html2canvas(document.querySelector("#board1")).then(canvas => push(canvas));
+const shot = (callback) => html2canvas(document.querySelector("#board1")).then(canvas => callback(canvas));
+let startFrame;
+/**
+ * Retain the capturing blob in the 'startFrame' so, we can later use it.
+ *
+ * @param canvas of the shot out chessboard.
+ */
+const retainBlob = (canvas) => canvas.toBlob((blob) => startFrame = blob);
 /**
  * Send out the shot out canvas to the backend server as an image/png via AJAX.
  *
@@ -39,7 +59,8 @@ const shot = () => html2canvas(document.querySelector("#board1")).then(canvas =>
 const push = (canvas) => {
     canvas.toBlob((blob) => {
         const form = new FormData()
-        form.append('file', blob, 'board-frame')
+        form.append('frame1', startFrame, 'board-frame1')
+        form.append('frame2', blob, 'board-frame2')
         $.ajax({
             url: '/movement/grab',
             method: 'POST',
@@ -92,6 +113,7 @@ $(() => {
         moveSpeed: 'slow',
         snapbackSpeed: 500,
         snapSpeed: 100,
+        onDragStart: onDragStart,
         onDrop: onDrop
     });
     board.start();

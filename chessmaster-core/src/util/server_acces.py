@@ -9,13 +9,14 @@ from requests.exceptions import ConnectionError
 
 from model.controller import MovementHandler
 from . import LOGGER
-from .api_access import NextMove, RefreshSessions
+from .api_access import RefreshSessions, NextMove
 
 HOST, PORT, SESSIONS = ('localhost', 16375, dict())
 
 
 class TCPRequestHandler(socketserver.StreamRequestHandler):
     _id_length, _wsid_length = (32, 8)
+    splitter = 'splitter'
 
     def handle(self):
         """
@@ -41,7 +42,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
             data = self.rfile.readlines()
 
             if len(data) > 0:
-                if len(data) == 1:
+                if len(data) == 1:  # Check if the line count of the file is 1 or else pass.
                     data = data[0]
                     if len(data) > self._id_length:
                         _id = data[:self._id_length].decode('utf-8')
@@ -69,7 +70,11 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
 
         :param data: item just received via the TCP socket as a list.
         """
-        iteration, _id, _wsid, buffer = (0, None, 0, bytearray())
+        _id, _wsid = (None, None)
+        iteration = 0
+        buffer = bytearray()
+        images = []
+
         for line in data:
             if iteration == 0:
                 _id = line[:self._id_length].decode('utf-8')
@@ -77,10 +82,26 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
 
                 line = line[self._id_length + self._wsid_length:]
 
+            if self.splitter in str(line):
+                b_splitter = bytearray(self.splitter.encode())
+                idx = line.find(b_splitter)
+
+                first = line[idx + len(b_splitter):]
+                last = line[:idx]
+
+                buffer.extend(last)
+                images.append(Image.open(io.BytesIO(buffer)))
+
+                buffer.clear()
+                buffer.extend(first)
+
+                iteration += 1
+                continue
+
             buffer.extend(line)
             iteration += 1
 
-        image = Image.open(io.BytesIO(buffer))
+        images.append(Image.open(io.BytesIO(buffer)))
         LOGGER.info(
             f'New frame received for the session id {_id} with the size of {len(buffer)} bytes, and return '
             f'websocket is "{_wsid}"')
@@ -96,7 +117,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         Note: '_wsid' doesn't involve on the model process, it just use to find 
         websocket destination where this frame originally came from. 
         """
-        SESSIONS[_id].accept(_wsid, image)
+        SESSIONS[_id].accept(_wsid, images)
         """
         Respond to the movement came from the UI. With this response, chess
         board will be updated.
