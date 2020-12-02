@@ -19,7 +19,7 @@ TEMP_PATH = f'{BUILD_PATH}/tmp'
 IMAGE_SIZE = (512, 512)
 
 # Logging configuration of the program.
-FORMAT = '%(asctime)s %(levelname)-8s  %(thread)d --- [%(threadName)s] %(filename)s : %(message)s'
+FORMAT = '%(asctime)s %(levelname)-8s  %(thread)-5d --- [%(threadName)s] %(filename)s : %(message)s'
 LEVEL = logging.DEBUG
 FORMATTER = logging.Formatter(FORMAT)
 
