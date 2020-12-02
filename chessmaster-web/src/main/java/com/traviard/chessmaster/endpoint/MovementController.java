@@ -18,10 +18,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.SequenceInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
+import static com.traviard.chessmaster.util.AppConstants.SPLITTER;
 import static com.traviard.chessmaster.util.LogMessages.*;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
@@ -67,11 +73,15 @@ public class MovementController {
      * Garb the uploaded file (image) and push through the configured TCP socket
      * to the python program.
      *
-     * @param file instance of {@link MultipartFile} which uploaded.
+     * @param frame1 instance of {@link MultipartFile} which uploaded previous
+     *               status of the chessboard.
+     * @param frame2 instance of {@link MultipartFile} which uploaded new status
+     *               of the chessboard.
      * @return instance of {@link ResponseEntity} to tell the file upload status.
      */
     @PostMapping(path = "/grab", consumes = MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> grabImage(@RequestParam("file") MultipartFile file,
+    public ResponseEntity<Void> grabImage(@RequestParam("frame1") MultipartFile frame1,
+                                          @RequestParam("frame2") MultipartFile frame2,
                                           @NotNull HttpServletRequest request) {
 
         var cookies = request.getCookies();
@@ -89,11 +99,20 @@ public class MovementController {
                 .orElse(StringUtils.EMPTY);
 
         try {
-            serverComponent.write(id, wsid, file.getInputStream());
+            var imageSequence = new SequenceInputStream(Collections.enumeration(List.of(
+                    frame1.getInputStream(),
+                    new ByteArrayInputStream(SPLITTER.constant().getBytes(StandardCharsets.UTF_8)),
+                    frame2.getInputStream()
+            )));
+
+            serverComponent.write(id, wsid, imageSequence);
             LOGGER.info(INFO_FILE_PUSH_SUCCESS.message(
                     id,
-                    Optional.ofNullable(file.getOriginalFilename()).orElse("<NoFileName>"),
-                    file.getBytes().length));
+                    new StringBuilder(3)
+                            .append(Optional.ofNullable(frame1.getOriginalFilename()).orElse("<NoFileName>"))
+                            .append(" and ")
+                            .append(Optional.ofNullable(frame2.getOriginalFilename()).orElse("<NoFileName>")),
+                    frame1.getSize() + frame2.getSize()));
 
             return ResponseEntity.ok().build();
         } catch (IOException ex) {

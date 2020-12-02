@@ -18,8 +18,11 @@ public enum AppConstants {
     /**
      * Clean all the sessions stored in the dictionary of Python program.
      */
-    CLEAN_SESSIONS("clean");
-
+    CLEAN_SESSIONS("clean"),
+    /**
+     * Splitter for two streams combined with {@code SequencedInputStream}.
+     */
+    SPLITTER("splitter");
     /**
      * Local variable to keep {@code constance} command or
      * {@link String} value.
