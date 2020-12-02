@@ -1,10 +1,9 @@
 # -*- encoding: utf-8 -*-
 
 import cv2
-import numpy as np
 from torchvision import transforms as T
 
-from util import IMAGE_PATH, LOGGER, IMAGE_SIZE
+from util import IMAGE_PATH, LOGGER, IMAGE_SIZE, ToColor
 
 
 class MovementHandler(object):
@@ -13,7 +12,7 @@ class MovementHandler(object):
         self._id = _id
         self._wsid, self.result = None, None
         self.transform = T.Compose([
-            T.ToPILImage(),
+            ToColor(code=cv2.COLOR_RGBA2GRAY),
             T.Resize(IMAGE_SIZE),
             T.ToTensor()
         ])
@@ -28,12 +27,9 @@ class MovementHandler(object):
         self.result = self.model_invoke(image)
 
     def model_invoke(self, frame):
-        frame = np.array(frame, dtype=np.uint8)
-        frame = cv2.cvtColor(frame, code=cv2.COLOR_RGBA2GRAY)
-
         frame = self.transform(frame)  # TODO
 
-        # frame = frame.view(512, -1) * 255 # NOSONAR
+        # frame = frame.view(512, -1) * 255  # NOSONAR
         # Image.fromarray(frame.numpy().astype(np.uint8)).save('test.png')
 
         return "nextMove"
