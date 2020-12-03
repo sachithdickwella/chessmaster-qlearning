@@ -30,10 +30,10 @@ class MovementHandler(object):
         self.result = self.model_invoke(images)
 
     def model_invoke(self, frames):
-        dataset = ChessBoardDataset(frames, self.transform)
+        dataset = ChessBoardDataset(frames, transform=self.transform)
         dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, num_workers=NUM_WORKER, pin_memory=IS_CUDA)
 
-        frame = next(iter(dataloader))  # TODO
+        frame = next(iter(dataloader))  # NOSONAR TODO
 
         # frame1 = frame[0].view(512, -1) * 255  # NOSONAR
         # Image.fromarray(frame1.numpy().astype(np.uint8)).save('0.png')
