@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 
 from util import TEMP_PATH, LOGGER
+from . import DEVICE
 
 TRANSITIONS = namedtuple('Transitions', ['piece', 'state', 'action', 'next_state', 'reward'])
 PIECES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'r1', 'k1', 'b1', 'king', 'queen', 'b2', 'k2', 'r1']
@@ -14,7 +15,7 @@ PIECES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'r1', 'k1', 'b1', 'kin
 
 class ReplayMemory(object):
 
-    def __init__(self, capacity=10000):
+    def __init__(self, capacity=10_000):
         self.capacity = capacity
         self.memory = []
         self.position = 0
@@ -35,7 +36,15 @@ class ReplayMemory(object):
 
 class DeepQNetwork(nn.Module):
 
-    def __init__(self, name, nc=1, height=512, width=512):
+    def __init__(self, name, alpha=0.001, nc=1, dim=(512, 512)):
+        """
+        Initialize the 'DeepQNetwork' model instance with custom parameters.
+
+        :param name: model instance name hence there can multiple instances for different purposes.
+        :param alpha: learning rate for the optimizer.
+        :param nc: number of input channel of the initial image stack.
+        :param dim: dimensions of the initial input image stack.
+        """
         super(DeepQNetwork, self).__init__()
 
         self.name = name
@@ -80,7 +89,7 @@ class DeepQNetwork(nn.Module):
             )
         ]))
 
-        h, w = height, width
+        h, w = dim
         for _ in range(len(self.main)):
             h = self.conv2d_size_out(h)
             w = self.conv2d_size_out(w)
@@ -94,8 +103,18 @@ class DeepQNetwork(nn.Module):
             nn.LogSoftmax(dim=1)
         )
 
+        self.to(device=DEVICE)
+        self.criterion = nn.CrossEntropyLoss()
+        self.optimizer = torch.optim.Adam(params=self.parameters(), lr=alpha, betas=(0.9, 0.999))
+
     def forward(self, x):
-        x = self.main(x)
+        """
+        Feed forward the input throughout the network by this method.
+
+        :param x: input image stack for the network.
+        :return: the out of the model network after feed forward is done.
+        """
+        x = self.main(x.to(DEVICE))
         return self.head(x.view(x.size(0), -1))
 
     def load_checkpoint_(self):
@@ -108,6 +127,15 @@ class DeepQNetwork(nn.Module):
 
     @staticmethod
     def conv2d_size_out(size, kernel_size=5, stride=2):
+        """
+        Calculate the final dimensions of the images after going through
+        the convolutional networks.
+
+        :param size: current size of the frame (height, width).
+        :param kernel_size: kernel size of each of the convolution layer.
+        :param stride: strides through the each convolution layer.
+        :return: the final size of the image after convolution.
+        """
         return (size - (kernel_size - 1) - 1) // stride + 1
 
 
