@@ -33,7 +33,9 @@ const nextMove = (next) => {
  * @param oldPos FEN (Forsyth–Edwards Notation) string for the old position of the board.
  * @param orientation of the board (white/black at below).
  */
-const onDrop = (source, target, piece, newPos, oldPos, orientation) => setTimeout(() => shot(push), 500);
+const onDrop = (source, target, piece, newPos, oldPos, orientation) => setTimeout(() => {
+    if (source !== target) shot(push);
+}, 500);
 /**
  * The event of new move startup by the user.
  */
