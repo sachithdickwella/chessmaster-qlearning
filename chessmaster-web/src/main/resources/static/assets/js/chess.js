@@ -1743,8 +1743,12 @@ var Chess = function(fen) {
       return ascii()
     },
 
-    turn: function() {
-      return turn
+    turn: function(t) {
+      if (t !== undefined && t !== '') {
+        turn = t
+      } else {
+        return turn
+      }
     },
 
     move: function(move, options) {

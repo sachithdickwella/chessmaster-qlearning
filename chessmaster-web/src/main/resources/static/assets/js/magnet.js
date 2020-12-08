@@ -1,4 +1,4 @@
-let board;
+let board, game, startFrame;
 /**
  * Connect and subscribe a WebSocket. in order to receive server responses from
  * the model.
@@ -13,7 +13,7 @@ const connect = () => {
         document.cookie = `SID=${sessionId}; SameSite=strict; path=/`
         stompClient.subscribe('/user/queue/next', nextMove);
     });
-}
+};
 /**
  * Make the move upon the server response from the model.
  *
@@ -22,7 +22,7 @@ const connect = () => {
 const nextMove = (next) => {
     console.info(JSON.parse(next.body));
     board.move(`${players.black.k0}-c6`);
-}
+};
 /**
  * The event of new move by the user.
  *
@@ -36,17 +36,20 @@ const nextMove = (next) => {
 const onDrop = (source, target, piece, newPos, oldPos, orientation) => setTimeout(() => {
     if (source !== target) shot(push);
 }, 500);
+
 /**
- * The event of new move startup by the user.
+ * The event of new move startup by the user. Remove the square highlights and take a snapshot.
+ *
+ * @param source also know as square id of move.
+ * @param piece which started to move.
  */
-const onDragStart = () => shot(retainBlob);
+const onDragStart = (source, piece) => shot(retainBlob);
 /**
  * Shoot the chessboard HTML as a canvas and push it to the server end as an image.
  *
  * @param callback of the shot function after successful snapshot.
  */
 const shot = (callback) => html2canvas(document.querySelector("#board1")).then(canvas => callback(canvas));
-let startFrame;
 /**
  * Retain the capturing blob in the 'startFrame' so, we can later use it.
  *
@@ -78,11 +81,11 @@ const push = (canvas) => {
                  */
             },
             error: (jqXHR) => {
-                console.log(jqXHR)
+                console.log(jqXHR);
             }
         })
     }, 'image/png');
-}
+};
 /**
  * Chess pieces. p# is Pawn, k# is Knight, r# is Rook, b# is bishop
  * and King and Queen pieces respectively with the players colors.
@@ -109,6 +112,8 @@ const players = {
  * JQuery "ready" method to start the client side process and listeners.
  */
 $(() => {
+    game = Chess();
+
     board = ChessBoard('board1', {
         draggable: true,
         dropOffBoard: 'trash',
@@ -116,7 +121,7 @@ $(() => {
         snapbackSpeed: 500,
         snapSpeed: 100,
         onDragStart: onDragStart,
-        onDrop: onDrop
+        onDrop: onDrop,
     });
     board.start();
     /**
