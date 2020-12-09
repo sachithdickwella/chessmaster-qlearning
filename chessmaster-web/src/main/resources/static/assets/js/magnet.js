@@ -113,9 +113,13 @@ const push = (canvas) => canvas.toBlob((blob) => {
 /**
  * Update the status from the board status. Thi will provide a feedback to the
  * user to continue the game.
+ *
+ * @param t to update the game.turn if defined.
  */
-const updateStats = () => {
+const updateStats = (t) => {
     let status;
+    if (t !== undefined && t !== '') game.turn(t);
+
     if (game.in_checkmate()) {
         status = `Game over, ${_longTurn(game.turn())} player is in checkmate`;
     } else if (game.in_draw()) {
