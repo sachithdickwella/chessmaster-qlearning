@@ -22,6 +22,8 @@ const connect = () => {
 const nextMove = (next) => {
     console.info(JSON.parse(next.body));
     board.move(`${players.black.k0}-c6`);
+
+    updateStats()
 };
 /**
  * The event of new move by the user.
@@ -33,17 +35,41 @@ const nextMove = (next) => {
  * @param oldPos FEN (Forsyth–Edwards Notation) string for the old position of the board.
  * @param orientation of the board (white/black at below).
  */
-const onDrop = (source, target, piece, newPos, oldPos, orientation) => setTimeout(() => {
-    if (source !== target) shot(push);
-}, 500);
+const onDrop = (source, target, piece, newPos, oldPos, orientation) => {
+    const moves = game.move({
+        from: source,
+        to: target,
+        promotion: 'q' // NOTE: always promote to a queen for example simplicity
+    })
 
+    // Illegal move
+    if (moves === null) return 'snapback'
+
+    updateStats();
+
+    setTimeout(() => {
+        if (source !== target) shot(push);
+    }, 500);
+};
+/**
+ * Update the board position after the piece snap for castling,
+ * en passant, pawn promotion.
+ */
+const onSnapEnd = () => board.position(game.fen())
 /**
  * The event of new move startup by the user. Remove the square highlights and take a snapshot.
  *
  * @param source also know as square id of move.
  * @param piece which started to move.
  */
-const onDragStart = (source, piece) => shot(retainBlob);
+const onDragStart = (source, piece) => {
+    if (game.game_over()) return false;
+
+    if ((game.turn() === 'w' && piece.search(/^b/) !== -1)
+        || (game.turn() === 'b' && piece.search(/^w/) !== -1)) return false;
+
+    shot(retainBlob);
+};
 /**
  * Shoot the chessboard HTML as a canvas and push it to the server end as an image.
  *
@@ -61,31 +87,63 @@ const retainBlob = (canvas) => canvas.toBlob((blob) => startFrame = blob);
  *
  * @param canvas of the shot out chessboard.
  */
-const push = (canvas) => {
-    canvas.toBlob((blob) => {
-        const form = new FormData()
-        form.append('frame1', startFrame, 'board-frame1')
-        form.append('frame2', blob, 'board-frame2')
-        $.ajax({
-            url: '/movement/grab',
-            method: 'POST',
-            enctype: 'multipart/form-data',
-            contentType: false,
-            processData: false,
-            cache: false,
-            data: form,
-            beforeSend: (_ /* jqXHR */) => {
-                /*
-                 * Show ajax loader before send the frame and show until
-                 * receive a response with the next move.
-                 */
-            },
-            error: (jqXHR) => {
-                console.log(jqXHR);
-            }
-        })
-    }, 'image/png');
+const push = (canvas) => canvas.toBlob((blob) => {
+    const form = new FormData()
+    form.append('frame1', startFrame, 'board-frame1')
+    form.append('frame2', blob, 'board-frame2')
+    $.ajax({
+        url: '/movement/grab',
+        method: 'POST',
+        enctype: 'multipart/form-data',
+        contentType: false,
+        processData: false,
+        cache: false,
+        data: form,
+        beforeSend: (_ /* jqXHR */) => {
+            /*
+             * Show ajax loader before send the frame and show until
+             * receive a response with the next move.
+             */
+        },
+        error: (jqXHR) => {
+            console.log(jqXHR);
+        }
+    })
+}, 'image/png');
+/**
+ * Update the status from the board status. Thi will provide a feedback to the
+ * user to continue the game.
+ *
+ * @param t to update the game.turn if defined.
+ */
+const updateStats = (t) => {
+    let status;
+    if (t !== undefined && t !== '') game.turn(t);
+
+    if (game.in_checkmate()) {
+        status = `Game over, ${_longTurn(game.turn())} player is in checkmate`;
+    } else if (game.in_draw()) {
+        status = 'Game over, drawn position';
+    } else {
+        status = `${_longTurn(game.turn())} player's chance to move`;
+
+        if (game.in_check()) {
+            status += `, ${_longTurn(game.turn())} player is in check`;
+        }
+    }
+
+    $('#msg').text(status)
+    $('#fen').text(game.fen())
+    $('#pgn').text(game.pgn())
 };
+/**
+ * Feed the shot form the player turn, which is 'w' or 'b' and return the
+ * long capitalize form of the name.
+ *
+ * @param t also know as short term of the turn.
+ * @return the long capitalized version of the turn.
+ */
+const _longTurn = (t) => t === 'w' ? 'WHITE' : 'BLACK';
 /**
  * Chess pieces. p# is Pawn, k# is Knight, r# is Rook, b# is bishop
  * and King and Queen pieces respectively with the players colors.
@@ -122,8 +180,13 @@ $(() => {
         snapSpeed: 100,
         onDragStart: onDragStart,
         onDrop: onDrop,
+        onSnapEnd: onSnapEnd
     });
     board.start();
+    /**
+     * Update the status base on the initialized board config.
+     */
+    updateStats()
     /**
      * Connect to the WebSocket Broker.
      */
