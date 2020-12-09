@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="assets/img/favicon.png"/>
     <link type="text/css" rel="stylesheet" href="assets/css/bootstrap.min.css">
     <link type="text/css" rel="stylesheet" href="assets/css/chessboard-1.0.0.min.css">
+    <link type="text/css" rel="stylesheet" href="assets/css/magnet.css">
 </head>
 <body class="h-100">
 <div class="container-fluid h-100">
@@ -15,8 +16,15 @@
         <div class="col">
             <!-- Statistics -->
         </div>
-        <div class="col d-flex justify-content-center align-items-center">
-            <div id="board1" style="width: 512px"></div>
+        <div class="col">
+            <div class="row h-90 d-flex justify-content-center align-items-center">
+                <div id="board1" class="w-512px"></div>
+            </div>
+            <div class="row pr-4">
+                <p class="w-100 mb-0 text-right"><span id="msg"></span>&nbsp;&nbsp;<b>: MESSAGE</b></p>
+                <p class="w-100 mb-0 text-right"><span id="fen"></span>&nbsp;&nbsp;<b>: FEN</b></p>
+                <p class="w-100 mb-0 text-right"><span id="pgn"></span>&nbsp;&nbsp;<b>: PGN</b></p>
+            </div>
         </div>
     </div>
 </div>
