@@ -1,4 +1,4 @@
-let board, game, startFrame;
+let board, game, startFrame, _fen, _pgn;
 /**
  * Connect and subscribe a WebSocket. in order to receive server responses from
  * the model.
@@ -21,13 +21,14 @@ const connect = () => {
  */
 const nextMove = (next) => {
     console.info(JSON.parse(next.body));
-    board.move(`${players.black.k0}-c6`);
+    // TODO - board.move(`b8-c6`); - move string should come from websocket: QL model.
 
-    updateStats();
-    _cursor('auto');
+    updateStats(/* This should update the color value opponent belongs to*/);
+    _wait('auto');
 };
 /**
- * The event of new move by the user.
+ * The event of new move by the user or the computer. Oftentimes, computer doesn't trigger
+ * this event.
  *
  * @param source of the moved chess piece.
  * @param target or destination of the moved chess piece.
@@ -46,8 +47,7 @@ const onDrop = (source, target, piece, newPos, oldPos, orientation) => {
     // Illegal move
     if (moves === null) return 'snapback'
 
-    updateStats();
-    _cursor('wait');
+    _wait('wait', 'block');
 
     setTimeout(() => {
         if (source !== target) shot(push);
@@ -128,9 +128,12 @@ const updateStats = (t) => {
         }
     }
 
+    _fen = game.fen()
+    _pgn = game.pgn()
+
     $('#msg').text(status)
-    $('#fen').text(game.fen())
-    $('#pgn').text(game.pgn())
+    $('#fen').text(_fen.substring(_fen.length - 100, _fen.length))
+    $('#pgn').text(_pgn.substring(_pgn.length - 100, _pgn.length))
 };
 /**
  * Feed the shot form the player turn, which is 'w' or 'b' and return the
@@ -144,29 +147,11 @@ const _longTurn = (t) => t === 'w' ? 'WHITE' : 'BLACK';
  * Set the cursor to an appropriate state given via the parameter 'c'.
  *
  * @param c cursor state to be set.
+ * @param d display state of the ajax loader.
  */
-const _cursor = (c) => $('html,body').css('cursor', c);
-/**
- * Chess pieces. p# is Pawn, k# is Knight, r# is Rook, b# is bishop
- * and King and Queen pieces respectively with the players colors.
- */
-const players = {
-    white: {
-        p0: "a2", p1: "b2", p2: "c2", p3: "d2", p4: "e2", p5: "f2", p6: "g2", p7: "h2",
-        k0: "b1", k1: "g1",
-        r0: "a1", r1: "h1",
-        b0: "c1", b1: "f1",
-        king: "d1",
-        queen: "e1"
-    },
-    black: {
-        p0: "a7", p1: "b7", p2: "c7", p3: "d7", p4: "e7", p5: "f7", p6: "g7", p7: "h7",
-        k0: "b8", k1: "g8",
-        r0: "a8", r1: "h8",
-        b0: "c8", b1: "f8",
-        king: "d8",
-        queen: "e8"
-    }
+const _wait = (c, d) => {
+    $('.progress').css('display', d !== undefined && d.trim() !== '' ? d : 'none');
+    $('html,body').css('cursor', c);
 };
 /**
  * JQuery "ready" method to start the client side process and listeners.
