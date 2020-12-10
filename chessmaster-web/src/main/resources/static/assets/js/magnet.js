@@ -23,7 +23,8 @@ const nextMove = (next) => {
     console.info(JSON.parse(next.body));
     board.move(`${players.black.k0}-c6`);
 
-    updateStats()
+    updateStats();
+    _cursor('auto');
 };
 /**
  * The event of new move by the user.
@@ -46,6 +47,7 @@ const onDrop = (source, target, piece, newPos, oldPos, orientation) => {
     if (moves === null) return 'snapback'
 
     updateStats();
+    _cursor('wait');
 
     setTimeout(() => {
         if (source !== target) shot(push);
@@ -99,12 +101,6 @@ const push = (canvas) => canvas.toBlob((blob) => {
         processData: false,
         cache: false,
         data: form,
-        beforeSend: (_ /* jqXHR */) => {
-            /*
-             * Show ajax loader before send the frame and show until
-             * receive a response with the next move.
-             */
-        },
         error: (jqXHR) => {
             console.log(jqXHR);
         }
@@ -144,6 +140,12 @@ const updateStats = (t) => {
  * @return the long capitalized version of the turn.
  */
 const _longTurn = (t) => t === 'w' ? 'WHITE' : 'BLACK';
+/**
+ * Set the cursor to an appropriate state given via the parameter 'c'.
+ *
+ * @param c cursor state to be set.
+ */
+const _cursor = (c) => $('html,body').css('cursor', c);
 /**
  * Chess pieces. p# is Pawn, k# is Knight, r# is Rook, b# is bishop
  * and King and Queen pieces respectively with the players colors.
