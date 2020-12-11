@@ -1,4 +1,4 @@
-package com.traviard.chessmaster.config;
+package com.traviard.chessmaster.listener;
 
 import com.traviard.chessmaster.component.StaticClientComponent;
 import com.traviard.chessmaster.util.AppConstants;

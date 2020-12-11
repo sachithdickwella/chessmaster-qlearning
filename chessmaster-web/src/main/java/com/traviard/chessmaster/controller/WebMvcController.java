@@ -12,6 +12,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.context.annotation.SessionScope;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Optional;
+
+import static com.traviard.chessmaster.util.SessionConstants.FEN;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+
 /**
  * @author Sachith Dickwella
  */
@@ -54,12 +60,17 @@ public class WebMvcController {
     /**
      * Model mapping for the home/main page.
      *
-     * @param model Instance of {@link Model} set outbound model content.
+     * @param model   Instance of {@link Model} set outbound model content.
+     * @param request for the current request instance from the front-end.
      * @return the {@link String} of the page name.
      */
     @GetMapping(path = {"/", "index", "index.html"})
-    public String index(@NotNull Model model) {
+    public String index(@NotNull Model model, @NotNull HttpServletRequest request) {
         model.addAttribute("title", appHomeTitle);
+        model.addAttribute("fen", Optional.ofNullable(request.getSession()
+                .getAttribute(FEN.attribute()))
+                .orElse(EMPTY));
+
         return "index";
     }
 }

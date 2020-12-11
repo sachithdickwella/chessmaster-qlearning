@@ -29,6 +29,7 @@ import java.util.Optional;
 
 import static com.traviard.chessmaster.util.AppConstants.SPLITTER;
 import static com.traviard.chessmaster.util.LogMessages.*;
+import static com.traviard.chessmaster.util.SessionConstants.FEN;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 /**
@@ -73,15 +74,19 @@ public class MovementController {
      * Garb the uploaded file (image) and push through the configured TCP socket
      * to the python program.
      *
-     * @param frame1 instance of {@link MultipartFile} which uploaded previous
-     *               status of the chessboard.
-     * @param frame2 instance of {@link MultipartFile} which uploaded new status
-     *               of the chessboard.
+     * @param frame1  instance of {@link MultipartFile} which uploaded previous
+     *                status of the chessboard.
+     * @param frame2  instance of {@link MultipartFile} which uploaded new status
+     *                of the chessboard.
+     * @param fen     Forsyth–Edwards Notation (FEN) string to keep in the session on
+     *                every move from front-end.
+     * @param request {@link HttpServletRequest} instance for the current request.
      * @return instance of {@link ResponseEntity} to tell the file upload status.
      */
     @PostMapping(path = "/grab", consumes = MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> grabImage(@RequestParam("frame1") MultipartFile frame1,
                                           @RequestParam("frame2") MultipartFile frame2,
+                                          @RequestParam("fen") String fen,
                                           @NotNull HttpServletRequest request) {
 
         var cookies = request.getCookies();
@@ -113,6 +118,8 @@ public class MovementController {
                             .append(" and ")
                             .append(Optional.ofNullable(frame2.getOriginalFilename()).orElse("<NoFileName>")),
                     frame1.getSize() + frame2.getSize()));
+
+            request.getSession().setAttribute(FEN.attribute(), fen);
 
             return ResponseEntity.ok().build();
         } catch (IOException ex) {

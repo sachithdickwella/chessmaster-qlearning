@@ -90,9 +90,10 @@ const retainBlob = (canvas) => canvas.toBlob((blob) => startFrame = blob);
  * @param canvas of the shot out chessboard.
  */
 const push = (canvas) => canvas.toBlob((blob) => {
-    const form = new FormData()
-    form.append('frame1', startFrame, 'board-frame1')
-    form.append('frame2', blob, 'board-frame2')
+    const form = new FormData();
+    form.append('frame1', startFrame, 'board-frame1');
+    form.append('frame2', blob, 'board-frame2');
+    form.append('fen', game.fen());
     $.ajax({
         url: '/movement/grab',
         method: 'POST',
@@ -104,7 +105,7 @@ const push = (canvas) => canvas.toBlob((blob) => {
         error: (jqXHR) => {
             console.log(jqXHR);
         }
-    })
+    });
 }, 'image/png');
 /**
  * Update the status from the board status. Thi will provide a feedback to the
@@ -154,12 +155,20 @@ const _wait = (c, d) => {
     $('html,body').css('cursor', c);
 };
 /**
+ * Check if the FEN string is available from the session or not
+ * and return the available string if available and return 0, if
+ * not.
+ */
+const _fen_ = () => {
+    const fen = $('#fen_hidden').text();
+    return fen !== undefined && fen !== '' ? fen : 0;
+}
+/**
  * JQuery "ready" method to start the client side process and listeners.
  */
 $(() => {
-    game = Chess();
 
-    board = ChessBoard('board1', {
+    const configs = {
         draggable: true,
         dropOffBoard: 'trash',
         moveSpeed: 'slow',
@@ -168,13 +177,30 @@ $(() => {
         onDragStart: onDragStart,
         onDrop: onDrop,
         onSnapEnd: onSnapEnd
-    });
-    board.start();
-    /**
+    };
+
+    game = Chess();
+    /*
+     * Setup the 'position' if there's a FEN in the session and load
+     * the game from the FEN as well.
+     */
+    const fen = _fen_()
+    if (fen) {
+        configs.position = fen;
+        game.load(fen);
+    }
+
+    board = ChessBoard('board1', configs);
+    /*
+     * Start the 'board' if the FEN string is not available. Which means
+     * this is new game.
+     */
+    if (!fen) board.start();
+    /*
      * Update the status base on the initialized board config.
      */
     updateStats()
-    /**
+    /*
      * Connect to the WebSocket Broker.
      */
     connect();
