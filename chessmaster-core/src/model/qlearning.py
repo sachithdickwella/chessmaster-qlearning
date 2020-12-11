@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 
 from util import TEMP_PATH, LOGGER
-from . import DEVICE
+from . import DEVICE, GAMMA, EPS_START, EPS_END, EPS_DECAY
 
 TRANSITIONS = namedtuple('Transitions', ['piece', 'state', 'action', 'next_state', 'reward'])
 PIECES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'r1', 'k1', 'b1', 'king', 'queen', 'b2', 'k2', 'r1']
@@ -141,5 +141,24 @@ class DeepQNetwork(nn.Module):
 
 class Agent(object):
 
-    def __init__(self):
+    def __init__(self, alpha=0.001, target=1_000, mem_size=10_000, action_space=tuple(range(8))):
         super().__init__()
+
+        self.GAMMA = GAMMA
+        self.EPSILON_START = EPS_START
+        self.EPSILON_END = EPS_END
+        self.EPSILON_DECAY = EPS_DECAY
+
+        self.action_space = action_space
+        self.steps = 0                  # Number of state transitions.
+        self.learn_step_counter = 0     # Number of time learn function called to replace the 'target' network.
+
+        self.memory = ReplayMemory(capacity=mem_size)
+
+        self.replace_target_cnt = target
+
+        self.q_eval = DeepQNetwork("eval", alpha)
+        self.q_next = DeepQNetwork("next", alpha)
+
+
+
