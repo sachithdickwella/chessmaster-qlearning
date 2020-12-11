@@ -18,7 +18,7 @@ GAMMA = 0.999
 # epsilon (Rate of random action exploration).
 EPS_START = 0.9
 # Epsilon decay stop at this number.
-EPS_END = 0.5
+EPS_END = 0.05
 # Epsilon decay rate. Smaller this number, epsilon takes time to reach plateau and explore lots of
 # random actions over time. Could you linear decay, squared or any type of decaying method.
 EPS_DECAY = 200
