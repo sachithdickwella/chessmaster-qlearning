@@ -167,7 +167,6 @@ const _fen_ = () => {
  * JQuery "ready" method to start the client side process and listeners.
  */
 $(() => {
-
     const configs = {
         draggable: true,
         dropOffBoard: 'trash',

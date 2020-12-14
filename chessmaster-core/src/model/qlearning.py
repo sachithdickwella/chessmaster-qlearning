@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 
 from util import TEMP_PATH, LOGGER
-from . import DEVICE, GAMMA, EPS_START, EPS_END, EPS_DECAY
+from . import DEVICE, BATCH_SIZE, GAMMA, EPS_START, EPS_END, EPS_DECAY
 
 TRANSITIONS = namedtuple('Transitions', ['piece', 'state', 'action', 'next_state', 'reward'])
 PIECES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'r1', 'k1', 'b1', 'king', 'queen', 'b2', 'k2', 'r1']
@@ -157,8 +157,23 @@ class Agent(object):
 
         self.replace_target_cnt = target
 
-        self.q_eval = DeepQNetwork("eval", alpha)
-        self.q_next = DeepQNetwork("next", alpha)
+        self.q_eval = DeepQNetwork("eval", alpha)  # Estimate of the current set of states.
+        self.q_next = DeepQNetwork("next", alpha)  # Estimate of the successor set of states.
 
+    def choose_action(self, observations):
+        random = np.random.random()
+        actions = self.q_eval(observations)
 
+        if random < 1 + self.EPSILON_START:
+            action = torch.argmax(actions).item()
+        else:
+            action = np.random.choice(self.action_space)
+        return action
 
+    def learn(self):
+        self.q_eval.optimizer.zero_grad()
+        if self.replace_target_cnt is not None and \
+                self.learn_step_counter % self.replace_target_cnt == 0:
+            self.q_next.load_state_dict(self.q_eval.state_dict())
+
+        sample = self.memory.sample(BATCH_SIZE)
