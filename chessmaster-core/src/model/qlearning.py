@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 
 from util import TEMP_PATH, LOGGER
-from . import DEVICE, BATCH_SIZE, GAMMA, EPS_START, EPS_END, EPS_DECAY
+from . import DEVICE, BATCH_SIZE, GAMMA, EPS_START, EPS_END, EPS_DECAY, TARGET_UPDATE
 
 TRANSITIONS = namedtuple('Transitions', ['piece', 'state', 'action', 'next_state', 'reward'])
 PIECES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'r1', 'k1', 'b1', 'king', 'queen', 'b2', 'k2', 'r1']
@@ -141,7 +141,7 @@ class DeepQNetwork(nn.Module):
 
 class Agent(object):
 
-    def __init__(self, alpha=0.001, target=1_000, mem_size=10_000, action_space=tuple(range(8))):
+    def __init__(self, alpha=0.001, mem_size=10_000, action_space=tuple(range(8))):
         super().__init__()
 
         self.GAMMA = GAMMA
@@ -150,30 +150,28 @@ class Agent(object):
         self.EPSILON_DECAY = EPS_DECAY
 
         self.action_space = action_space
-        self.steps = 0                  # Number of state transitions.
-        self.learn_step_counter = 0     # Number of time learn function called to replace the 'target' network.
+        self.episodes = 0    # Number of state transitions.
+        self.n_episodes = 0  # Number of time learn function called to replace the 'target' network.
 
         self.memory = ReplayMemory(capacity=mem_size)
 
-        self.replace_target_cnt = target
+        self.policy_net = DeepQNetwork("policy", alpha)  # Estimate of the current set of states.
+        self.target_net = DeepQNetwork("target", alpha)  # Estimate of the successor set of states.
 
-        self.q_eval = DeepQNetwork("eval", alpha)  # Estimate of the current set of states.
-        self.q_next = DeepQNetwork("next", alpha)  # Estimate of the successor set of states.
+    def select_action(self, observations):
+        rand = np.random.random()
 
-    def choose_action(self, observations):
-        random = np.random.random()
-        actions = self.q_eval(observations)
-
-        if random < 1 + self.EPSILON_START:
-            action = torch.argmax(actions).item()
+        if rand < 1 + self.EPSILON_START:
+            with torch.no_grad():
+                actions = self.policy_net(observations)
+                return torch.argmax(actions).item()
         else:
-            action = np.random.choice(self.action_space)
-        return action
+            return np.random.choice(self.action_space)
 
     def learn(self):
-        self.q_eval.optimizer.zero_grad()
-        if self.replace_target_cnt is not None and \
-                self.learn_step_counter % self.replace_target_cnt == 0:
-            self.q_next.load_state_dict(self.q_eval.state_dict())
+        self.policy_net.optimizer.zero_grad()
+
+        if self.n_episodes % TARGET_UPDATE == 0:
+            self.target_net.load_state_dict(self.policy_net.state_dict())
 
         sample = self.memory.sample(BATCH_SIZE)
