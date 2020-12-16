@@ -1,7 +1,8 @@
 # -*- encoding: utf-8 -*-
 
-import numpy as np
 import re
+
+import numpy as np
 
 
 class Board(object):
@@ -33,3 +34,14 @@ class Board(object):
         board[self.ranks[1], self.f_letters['e']] = board[self.ranks[8], self.f_letters['e']] = self.pieces['k']
 
         return board
+
+    def move(self, move):
+        if type(move) is str:
+            raise TypeError('Item index should be Algebraic Notation')
+        elif not re.match('^([a-h][1-8]-?)+$', move):
+            raise KeyError('Item index doesn\'t match the pattern \'([a-h][1-8]-?)+$\'')
+        else:
+            _from, _to = move.split('-')
+            if self[_from] == 0:
+                return None
+
