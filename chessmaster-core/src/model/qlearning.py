@@ -10,7 +10,6 @@ from util import TEMP_PATH, LOGGER
 from . import DEVICE, BATCH_SIZE, GAMMA, EPS_START, EPS_END, EPS_DECAY, TARGET_UPDATE
 
 TRANSITIONS = namedtuple('Transitions', ['piece', 'state', 'action', 'next_state', 'reward'])
-PIECES = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'r1', 'k1', 'b1', 'king', 'queen', 'b2', 'k2', 'r1']
 
 
 class ReplayMemory(object):
