@@ -1,18 +1,23 @@
 # -*- encoding: utf-8 -*-
 
 import re
+from collections import namedtuple
 
 import numpy as np
 
-FLAGS = {
-    'n': 'a non capture',
-    'b': 'a pawn push of two squares',
-    'e': 'an en passant capture',
-    'c': 'a standard capture',
-    'p': 'a promotion',
-    'k': 'king-side castling',
-    'q': 'queen-side castling'
-}
+# Players of the game.
+PLAYERS = namedtuple('Players', ('WHITE', 'BLACK'))(*'wb')
+PLAYERS_BITS = namedtuple('PlayersBits', ('WHITE', 'BLACK'))(-1, 1)
+# Flags for the movement.
+FLAGS = namedtuple('Flags', ('NORMAL',
+                             'CAPTURE',
+                             'BIG_PAWN',
+                             'EP_CAPTURE',
+                             'PROMOTION',
+                             'KING_SIDE_CASTLE',
+                             'QUEEN_SIDE_CASTLE'))(*'ncbepkq')
+# Chess pieces of the board.
+PIECES = namedtuple('Pieces', ('PAWN', 'KNIGHT', 'BISHOP', 'ROOK', 'QUEEN', 'KING'))(*'pnbrqk')
 
 
 class Board(object):
@@ -24,7 +29,9 @@ class Board(object):
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
 
         self.pieces = dict(zip('pnbrqk', range(1, 7)))
-        self._board = self.init_board()
+        self._board, self.c_board = self.init_board()
+
+        self._turn = PLAYERS.WHITE
 
     def __getitem__(self, item):
         """
@@ -43,15 +50,31 @@ class Board(object):
             return self._board[self.ranks[int(item[1])], self.f_letters[item[0]]]
 
     def init_board(self):
+        # Board with pieces location despite color of the pieces.
         board = np.zeros((8, 8), dtype=np.uint8)
-        board[self.ranks[2], :] = board[self.ranks[7], :] = self.pieces['p']
-        board[self.ranks[1], self.f_letters['a']::7] = board[self.ranks[8], self.f_letters['a']::7] = self.pieces['r']
-        board[self.ranks[1], self.f_letters['b']::5] = board[self.ranks[8], self.f_letters['b']::5] = self.pieces['n']
-        board[self.ranks[1], self.f_letters['c']::3] = board[self.ranks[8], self.f_letters['c']::3] = self.pieces['b']
-        board[self.ranks[1], self.f_letters['d']] = board[self.ranks[8], self.f_letters['d']] = self.pieces['q']
-        board[self.ranks[1], self.f_letters['e']] = board[self.ranks[8], self.f_letters['e']] = self.pieces['k']
+        board[self.ranks[2], :] = board[self.ranks[7], :] = self.pieces[PIECES.PAWN]
+        board[self.ranks[1], self.f_letters['a']::7] = board[self.ranks[8], self.f_letters['a']::7] = self.pieces[
+            PIECES.ROOK]
+        board[self.ranks[1], self.f_letters['b']::5] = board[self.ranks[8], self.f_letters['b']::5] = self.pieces[
+            PIECES.KNIGHT]
+        board[self.ranks[1], self.f_letters['c']::3] = board[self.ranks[8], self.f_letters['c']::3] = self.pieces[
+            PIECES.BISHOP]
+        board[self.ranks[1], self.f_letters['d']] = board[self.ranks[8], self.f_letters['d']] = self.pieces[
+            PIECES.QUEEN]
+        board[self.ranks[1], self.f_letters['e']] = board[self.ranks[8], self.f_letters['e']] = self.pieces[PIECES.KING]
 
-        return board
+        # Board with the colors of pieces despite the type of the pieces.
+        _board = np.zeros((8, 8), dtype=np.int8)
+        _board[:2] = PLAYERS_BITS.BLACK
+        _board[6:] = PLAYERS_BITS.WHITE
+
+        return board, _board
+
+    def toggle_player(self):
+        """
+        Toggle the :func:`~self._turn` value depending on the current value. Nothing returns.
+        """
+        self._turn = PLAYERS.WHITE if self._turn == PLAYERS.BLACK else PLAYERS.BLACK
 
     def move(self, move):
         """
@@ -71,6 +94,8 @@ class Board(object):
             _from, _to = move.lower().split('-')
             if self[_from] == 0:
                 return None
+
+            piece = self[_from]
 
 
 class Move(object):
