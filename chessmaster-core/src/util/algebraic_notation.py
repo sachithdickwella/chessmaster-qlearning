@@ -87,12 +87,15 @@ class Move(object):
         self.captured = captured
 
     def dict(self):
-        return {
+        details: dict = {
             'color': self.color,
             'flag': self.flag,
             'from': self._from,
             'to': self._to,
             'piece': self.piece,
-            'san': self.san,
-            'captured': self.captured
+            'san': self.san
         }
+
+        if self.captured is not None:
+            details['captured'] = self.captured
+        return details
