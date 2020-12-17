@@ -11,3 +11,9 @@ if __name__ == '__main__':
     os.makedirs(TEMP_PATH, exist_ok=True)
 
     server_acces.init()
+
+    # from util.algebraic_notation import Board
+    #
+    # san = Board()
+    # print(san._board)
+    # print(san['e8'])
