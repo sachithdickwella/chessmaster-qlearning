@@ -122,19 +122,19 @@ class Board(object):
 
             if _to in moves:
                 # TODO - define a valid 'flag' and 'captured' value on return value.
-                return Move(self._turn, _from=_from, _to=_to, piece=piece, san=f'{piece}{_to}', flag='')
+                return Move(self._turn, _from, _to, piece, f'{piece}{_to}', *moves[_to])
             else:
                 return None
 
     @staticmethod
-    def generate_moves(piece):
+    def generate_moves(piece, color):
         # TODO - work on decision of valid move destinations.
-        return []
+        return {'to': ('flag', 'captured')}
 
 
 class Move(object):
 
-    def __init__(self, color, flag, _from, _to, piece, san, captured=None):
+    def __init__(self, color, _from, _to, piece, san, flag, captured=None):
         super(Move, self).__init__()
 
         self.color = color
