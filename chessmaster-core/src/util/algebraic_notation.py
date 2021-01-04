@@ -59,7 +59,7 @@ class Board(object):
         if type(item) is not str:
             raise TypeError('Item index should be Algebraic Notation')
         elif not re.match('^[a-hA-H][1-8]$', item):
-            raise KeyError('Item index doesn\'t match the pattern \'^[a-h][1-8]$\'')
+            raise KeyError('Item index does not match the pattern \'^[a-h][1-8]$\'')
         else:
             item = item.lower()
             if color:
@@ -118,7 +118,7 @@ class Board(object):
                     or (d_piece and self._turn == dp_color):
                 return None
 
-            moves = self.generate_moves(piece)
+            moves = self.generate_moves(piece, p_color)
 
             if _to in moves:
                 # TODO - define a valid 'flag' and 'captured' value on return value.
