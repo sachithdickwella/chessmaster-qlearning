@@ -47,6 +47,13 @@ class Board(object):
 
         self._turn = PLAYERS_BITS.WHITE
 
+    def __str__(self):
+        return "Pieces Location:\n" \
+            "  {}\n" \
+            "Pieces Location in Color:\n" \
+            "  {}".format(np.array2string(self._board, separator=', ', prefix='\t'),
+                          np.array2string(self.c_board, separator=', ', prefix='\t'))
+
     def setup_board(self):
         # Board with pieces location despite color of the pieces.
         board = np.zeros((8, 8), dtype=np.uint8)
