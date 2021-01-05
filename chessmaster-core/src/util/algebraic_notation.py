@@ -49,10 +49,10 @@ class Board(object):
 
     def __str__(self):
         return "Pieces Location:\n" \
-            "  {}\n" \
-            "Pieces Location in Color:\n" \
-            "  {}".format(np.array2string(self._board, separator=', ', prefix='\t'),
-                          np.array2string(self.c_board, separator=', ', prefix='\t'))
+               "  {}\n" \
+               "Pieces Location in Color:\n" \
+               "  {}".format(np.array2string(self._board, separator=', ', prefix='\t'),
+                             np.array2string(self.c_board, separator=', ', prefix='\t'))
 
     def setup_board(self):
         # Board with pieces location despite color of the pieces.
@@ -111,7 +111,7 @@ class Board(object):
         :return: an instance of :func:`~Move` class with the details of source, target,
         color, flag, target SAN and piece if it's legal move. Otherwise 'None' returns.
         """
-        if type(move) is str:
+        if type(move) is not str:
             raise TypeError('Item index should be Algebraic Notation')
         elif not re.match('^([a-hA-H][1-8]-?)+$', move):
             raise KeyError('Item index does not match the pattern \'([a-h][1-8]-?)+$\'')
@@ -125,7 +125,7 @@ class Board(object):
                     or (d_piece and self._turn == dp_color):
                 return None
 
-            moves = self.generate_moves(piece, p_color)
+            moves = self.generate_moves(_from, piece, p_color)
 
             if _to in moves:
                 # TODO - define a valid 'flag' and 'captured' value on return value.
@@ -133,10 +133,17 @@ class Board(object):
             else:
                 return None
 
-    @staticmethod
-    def generate_moves(piece, color):
+    def generate_moves(self, _from, piece, p_color):
+
+        def pawn():  # NOSONAR
+            pass
+
+        def rook():  # NOSONAR
+            # TODO - Rook's legal movements.
+            pass
+
         # TODO - work on decision of valid move destinations.
-        return {'to': ('flag', 'captured')}
+        return [{'to': ('flag', 'captured')}]
 
 
 class Move(object):
