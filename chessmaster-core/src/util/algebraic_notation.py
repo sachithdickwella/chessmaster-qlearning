@@ -43,31 +43,11 @@ class Board(object):
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
 
         self.pieces = dict(zip('pnbrqk', range(1, 7)))
-        self._board, self.c_board = self.init_board()
+        self._board, self.c_board = self.setup_board()
 
         self._turn = PLAYERS_BITS.WHITE
 
-    def get_square(self, item, color=False):
-        """
-        Get the square value from the algebraic chess notation. If a chess piece is available
-        on that square, return the piece value. Otherwise 0 returns.
-
-        :param item: algebraic notation of the square (ex: e4, a8, b6).
-        :param color: boolean expression to get color value or piece value from the square.
-        :return: the square value for input algebraic notation.
-        """
-        if type(item) is not str:
-            raise TypeError('Item index should be Algebraic Notation')
-        elif not re.match('^[a-hA-H][1-8]$', item):
-            raise KeyError('Item index does not match the pattern \'^[a-h][1-8]$\'')
-        else:
-            item = item.lower()
-            if color:
-                return self._board[self.ranks[int(item[1])], self.f_letters[item[0]]]
-            else:
-                return self.c_board[self.ranks[int(item[1])], self.f_letters[item[0]]]
-
-    def init_board(self):
+    def setup_board(self):
         # Board with pieces location despite color of the pieces.
         board = np.zeros((8, 8), dtype=np.uint8)
         board[self.ranks[2], :] = board[self.ranks[7], :] = self.pieces[PIECES.PAWN]
@@ -87,6 +67,26 @@ class Board(object):
         _board[6:] = PLAYERS_BITS.WHITE
 
         return board, _board
+
+    def get_square(self, item, color=False):
+        """
+        Get the square value from the algebraic chess notation. If a chess piece is available
+        on that square, return the piece value. Otherwise 0 returns.
+
+        :param item: algebraic notation of the square (ex: e4, a8, b6).
+        :param color: boolean expression to get color value or piece value from the square.
+        :return: the square value for input algebraic notation.
+        """
+        if type(item) is not str:
+            raise TypeError('Item index should be string Algebraic Notation')
+        elif not re.match('^[a-hA-H][1-8]$', item):
+            raise KeyError('Item index does not match the pattern \'^[a-h][1-8]$\'')
+        else:
+            item = item.lower()
+            if not color:
+                return self._board[self.ranks[int(item[1])], self.f_letters[item[0]]]
+            else:
+                return self.c_board[self.ranks[(len(self.ranks) + 1) - int(item[1])], self.f_letters[item[0]]]
 
     def toggle_player(self):
         """
