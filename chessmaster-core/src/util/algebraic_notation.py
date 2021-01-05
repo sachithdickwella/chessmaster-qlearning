@@ -107,7 +107,7 @@ class Board(object):
         if type(move) is str:
             raise TypeError('Item index should be Algebraic Notation')
         elif not re.match('^([a-hA-H][1-8]-?)+$', move):
-            raise KeyError('Item index doesn\'t match the pattern \'([a-h][1-8]-?)+$\'')
+            raise KeyError('Item index does not match the pattern \'([a-h][1-8]-?)+$\'')
         else:
             _from, _to = move.lower().split('-')
 
