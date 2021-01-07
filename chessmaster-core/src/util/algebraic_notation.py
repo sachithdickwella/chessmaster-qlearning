@@ -75,35 +75,27 @@ class Board(object):
 
         return board, _board
 
-    def get_square(self, san, color=False, loc=False):
+    def get_square(self, san):
         """
         Get the square value from the algebraic chess notation. If a chess piece is available
         on that square, return the piece value. Otherwise 0 returns.
 
-        If the color is 'True', then the square 'color' value would be returned between 1 or 2
-        respectively WHITE or BLACK. If the loc (location) is 'True', square index would be returned
-        as a tuple (row, column) value for the array.
-
-        If color and loc (location) are both defined, prioritize the color value and return the
-        same discarding location request value.
-
         :param san: algebraic notation of the square (ex: e4, a8, b6).
-        :param color: boolean expression to get color value or piece value from the square.
-        :param loc: Index location of the item despite the color.
         :return: the square value for input algebraic notation.
         """
+
         if type(san) is not str:
             raise TypeError('Item index should be string Algebraic Notation')
         elif not re.match('^[a-hA-H][1-8]$', san):
             raise KeyError('Item index does not match the pattern \'^[a-h][1-8]$\'')
         else:
             san = san.lower()
-            if color:
-                return self.c_board[self.ranks[(len(self.ranks) + 1) - int(san[1])], self.f_letters[san[0]]]
-            elif loc:
-                return self.ranks[int(san[1])], self.f_letters[san[0]]
-            else:
-                return self._board[self.ranks[int(san[1])], self.f_letters[san[0]]]
+
+            return namedtuple('Square', ('piece', 'color', 'location'))(
+                self._board[self.ranks[int(san[1])], self.f_letters[san[0]]],
+                self.c_board[self.ranks[(len(self.ranks) + 1) - int(san[1])], self.f_letters[san[0]]],
+                (self.ranks[int(san[1])], self.f_letters[san[0]])
+            )
 
     def toggle_player(self):
         """
@@ -128,14 +120,14 @@ class Board(object):
         else:
             _from, _to = move.lower().split('-')
 
-            piece, p_color = self.get_square(_from), self.get_square(_from, True)
-            d_piece, dp_color = self.get_square(_to), self.get_square(_to, True)
+            piece, p_color, _ = self.get_square(_from)
+            d_piece, dp_color, _ = self.get_square(_to)
 
             if (not piece or self._turn != p_color) \
                     or (d_piece and self._turn == dp_color):
                 return None
 
-            moves = self.generate_moves(_from, piece, p_color)
+            moves = self.generate_moves(_from)
 
             if _to in moves:
                 # TODO - define a valid 'flag' and 'captured' value on return value.
@@ -143,7 +135,8 @@ class Board(object):
             else:
                 return None
 
-    def generate_moves(self, _from, piece, p_color):
+    def generate_moves(self, _from):
+        piece, color, location = self.get_square(_from)
 
         def pawn():  # NOSONAR
             pass
