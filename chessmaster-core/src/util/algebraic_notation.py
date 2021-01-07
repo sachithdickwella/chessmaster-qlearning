@@ -75,25 +75,35 @@ class Board(object):
 
         return board, _board
 
-    def get_square(self, item, color=False):
+    def get_square(self, san, color=False, loc=False):
         """
         Get the square value from the algebraic chess notation. If a chess piece is available
         on that square, return the piece value. Otherwise 0 returns.
 
-        :param item: algebraic notation of the square (ex: e4, a8, b6).
+        If the color is 'True', then the square 'color' value would be returned between 1 or 2
+        respectively WHITE or BLACK. If the loc (location) is 'True', square index would be returned
+        as a tuple (row, column) value for the array.
+
+        If color and loc (location) are both defined, prioritize the color value and return the
+        same discarding location request value.
+
+        :param san: algebraic notation of the square (ex: e4, a8, b6).
         :param color: boolean expression to get color value or piece value from the square.
+        :param loc: Index location of the item despite the color.
         :return: the square value for input algebraic notation.
         """
-        if type(item) is not str:
+        if type(san) is not str:
             raise TypeError('Item index should be string Algebraic Notation')
-        elif not re.match('^[a-hA-H][1-8]$', item):
+        elif not re.match('^[a-hA-H][1-8]$', san):
             raise KeyError('Item index does not match the pattern \'^[a-h][1-8]$\'')
         else:
-            item = item.lower()
-            if not color:
-                return self._board[self.ranks[int(item[1])], self.f_letters[item[0]]]
+            san = san.lower()
+            if color:
+                return self.c_board[self.ranks[(len(self.ranks) + 1) - int(san[1])], self.f_letters[san[0]]]
+            elif loc:
+                return self.ranks[int(san[1])], self.f_letters[san[0]]
             else:
-                return self.c_board[self.ranks[(len(self.ranks) + 1) - int(item[1])], self.f_letters[item[0]]]
+                return self._board[self.ranks[int(san[1])], self.f_letters[san[0]]]
 
     def toggle_player(self):
         """
@@ -143,7 +153,7 @@ class Board(object):
             pass
 
         # TODO - work on decision of valid move destinations.
-        return [{'to': ('flag', 'captured')}]
+        return {'to': ('flag', 'captured')}
 
 
 class Move(object):
