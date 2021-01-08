@@ -38,6 +38,7 @@ class Board(object):
 
     def __init__(self):
         super(Board, self).__init__()
+        self.dimension = (8, 8)
 
         self.ranks = dict(zip(range(1, 9), range(8)))
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
