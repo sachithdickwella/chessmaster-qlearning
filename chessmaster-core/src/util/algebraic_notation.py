@@ -76,7 +76,7 @@ class Board(object):
 
         return board, _board
 
-    def get_square(self, san):
+    def square(self, san, *args):
         """
         Get the square value from the algebraic chess notation. If a chess piece is available
         on that square, return the piece value. Otherwise 0 returns.
@@ -121,8 +121,8 @@ class Board(object):
         else:
             _from, _to = move.lower().split('-')
 
-            piece, p_color, _ = self.get_square(_from)
-            d_piece, dp_color, _ = self.get_square(_to)
+            piece, p_color, _ = self.square(_from)
+            d_piece, dp_color, _ = self.square(_to)
 
             if (not piece or self._turn != p_color) \
                     or (d_piece and self._turn == dp_color):
@@ -137,10 +137,11 @@ class Board(object):
                 return None
 
     def generate_moves(self, _from):
-        piece, color, location = self.get_square(_from)
+        piece, color, loc = self.square(_from)
 
-        def pawn():  # NOSONAR
-            pass
+        def pawn():
+            if (loc[0] == 1 and color == PLAYERS_BITS.WHITE) or (loc[0] == 7 and color == PLAYERS_BITS.BLACK):
+                pass
 
         def rook():  # NOSONAR
             # TODO - Rook's legal movements.
