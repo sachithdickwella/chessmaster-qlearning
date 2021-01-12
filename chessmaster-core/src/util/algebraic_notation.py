@@ -76,7 +76,7 @@ class Board(object):
 
         return board, _board
 
-    def square(self, san, *args):
+    def square(self, san):
         """
         Get the square value from the algebraic chess notation. If a chess piece is available
         on that square, return the piece value. Otherwise 0 returns.
@@ -85,18 +85,28 @@ class Board(object):
         :return: the square value for input algebraic notation.
         """
 
-        if type(san) is not str:
-            raise TypeError('Item index should be string Algebraic Notation')
-        elif not re.match('^[a-hA-H][1-8]$', san):
+        if type(san) is not str and type(san) is not tuple:
+            raise TypeError('Item index should be string Algebraic Notation or Tuple index location')
+        elif type(san) is str and not re.match('^[a-hA-H][1-8]$', san):
             raise KeyError('Item index does not match the pattern \'^[a-h][1-8]$\'')
+        elif type(san) is tuple and len(san) != 2:
+            raise KeyError(f'Item index should be 2-dimensional not {len(san)}-dimensional')
         else:
-            san = san.lower()
+            if type(san) is str:
+                san = san.lower()
+                return namedtuple('Square', ('piece', 'color', 'location'))(
+                    self._board[self.ranks[int(san[1])], self.f_letters[san[0]]],
+                    self.c_board[self.ranks[(len(self.ranks) + 1) - int(san[1])], self.f_letters[san[0]]],
+                    (self.ranks[int(san[1])], self.f_letters[san[0]])
+                )
+            else:
+                try:
+                    file_letter = next(k for k, v in self.f_letters.items() if v == san[1])
+                    rank = next(str(k) for k, v in self.ranks.items() if v == san[0])
 
-            return namedtuple('Square', ('piece', 'color', 'location'))(
-                self._board[self.ranks[int(san[1])], self.f_letters[san[0]]],
-                self.c_board[self.ranks[(len(self.ranks) + 1) - int(san[1])], self.f_letters[san[0]]],
-                (self.ranks[int(san[1])], self.f_letters[san[0]])
-            )
+                    return file_letter + rank
+                except StopIteration:
+                    raise IndexError(f'Indexes should be between 0 and 7: not {san}')
 
     def toggle_player(self):
         """
