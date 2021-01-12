@@ -39,6 +39,7 @@ class Board(object):
     def __init__(self):
         super(Board, self).__init__()
         self.dimension = (8, 8)
+        self.pawn_history = []
 
         self.ranks = dict(zip(range(1, 9), range(8)))
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
@@ -67,7 +68,8 @@ class Board(object):
             PIECES.BISHOP]
         board[self.ranks[1], self.f_letters['d']] = board[self.ranks[8], self.f_letters['d']] = self.pieces[
             PIECES.QUEEN]
-        board[self.ranks[1], self.f_letters['e']] = board[self.ranks[8], self.f_letters['e']] = self.pieces[PIECES.KING]
+        board[self.ranks[1], self.f_letters['e']] = board[self.ranks[8], self.f_letters['e']] = self.pieces[
+            PIECES.KING]
 
         # Board with the colors of pieces despite the type of the pieces.
         _board = np.zeros((8, 8), dtype=np.uint8)
@@ -104,7 +106,10 @@ class Board(object):
                     file_letter = next(k for k, v in self.f_letters.items() if v == san[1])
                     rank = next(str(k) for k, v in self.ranks.items() if v == san[0])
 
-                    return file_letter + rank
+                    san = file_letter + rank
+
+                    square = self.square(san)
+                    return namedtuple('Square', ('piece', 'color', 'location'))(square.piece, square.color, san)
                 except StopIteration:
                     raise IndexError(f'Indexes should be between 0 and 7: not {san}')
 
@@ -150,8 +155,17 @@ class Board(object):
         piece, color, loc = self.square(_from)
 
         def pawn():
-            if (loc[0] == 1 and color == PLAYERS_BITS.WHITE) or (loc[0] == 7 and color == PLAYERS_BITS.BLACK):
-                pass
+            def check8():
+                for i in range(1, 9):
+                    pass
+
+
+            if (loc[0] == 1 and color == PLAYERS_BITS.WHITE) \
+                    or (loc[0] == 7 and color == PLAYERS_BITS.BLACK):
+                if _from not in self.pawn_history:
+                    self.pawn_history.append(_from)
+                else:
+                    pass
 
         def rook():  # NOSONAR
             # TODO - Rook's legal movements.
