@@ -44,10 +44,4 @@ class MovementHandler(object):
         return "nextMove"
 
     def response(self):
-        return f"""
-        {{
-            "_id": "{self._id}",
-            "_wsid": "{self._wsid}",
-            "move": "{self.result}"
-        }}
-        """
+        return f"""{{ "_id": "{self._id}", "_wsid": "{self._wsid}", "move": "{self.result}" }}"""

@@ -39,6 +39,7 @@ class Board(object):
     def __init__(self):
         super(Board, self).__init__()
         self.dimension = (8, 8)
+        self.pawn_history = []
 
         self.ranks = dict(zip(range(1, 9), range(8)))
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
@@ -67,7 +68,8 @@ class Board(object):
             PIECES.BISHOP]
         board[self.ranks[1], self.f_letters['d']] = board[self.ranks[8], self.f_letters['d']] = self.pieces[
             PIECES.QUEEN]
-        board[self.ranks[1], self.f_letters['e']] = board[self.ranks[8], self.f_letters['e']] = self.pieces[PIECES.KING]
+        board[self.ranks[1], self.f_letters['e']] = board[self.ranks[8], self.f_letters['e']] = self.pieces[
+            PIECES.KING]
 
         # Board with the colors of pieces despite the type of the pieces.
         _board = np.zeros((8, 8), dtype=np.uint8)
@@ -76,7 +78,7 @@ class Board(object):
 
         return board, _board
 
-    def get_square(self, san):
+    def square(self, san):
         """
         Get the square value from the algebraic chess notation. If a chess piece is available
         on that square, return the piece value. Otherwise 0 returns.
@@ -85,18 +87,31 @@ class Board(object):
         :return: the square value for input algebraic notation.
         """
 
-        if type(san) is not str:
-            raise TypeError('Item index should be string Algebraic Notation')
-        elif not re.match('^[a-hA-H][1-8]$', san):
+        if type(san) is not str and type(san) is not tuple:
+            raise TypeError('Item index should be string Algebraic Notation or Tuple index location')
+        elif type(san) is str and not re.match('^[a-hA-H][1-8]$', san):
             raise KeyError('Item index does not match the pattern \'^[a-h][1-8]$\'')
+        elif type(san) is tuple and len(san) != 2:
+            raise KeyError(f'Item index should be 2-dimensional not {len(san)}-dimensional')
         else:
-            san = san.lower()
+            if type(san) is str:
+                san = san.lower()
+                return namedtuple('Square', ('piece', 'color', 'location'))(
+                    self._board[self.ranks[int(san[1])], self.f_letters[san[0]]],
+                    self.c_board[self.ranks[(len(self.ranks) + 1) - int(san[1])], self.f_letters[san[0]]],
+                    (self.ranks[int(san[1])], self.f_letters[san[0]])
+                )
+            else:
+                try:
+                    file_letter = next(k for k, v in self.f_letters.items() if v == san[1])
+                    rank = next(str(k) for k, v in self.ranks.items() if v == san[0])
 
-            return namedtuple('Square', ('piece', 'color', 'location'))(
-                self._board[self.ranks[int(san[1])], self.f_letters[san[0]]],
-                self.c_board[self.ranks[(len(self.ranks) + 1) - int(san[1])], self.f_letters[san[0]]],
-                (self.ranks[int(san[1])], self.f_letters[san[0]])
-            )
+                    san = file_letter + rank
+
+                    square = self.square(san)
+                    return namedtuple('Square', ('piece', 'color', 'location'))(square.piece, square.color, san)
+                except StopIteration:
+                    raise IndexError(f'Indexes should be between 0 and 7: not {san}')
 
     def toggle_player(self):
         """
@@ -121,8 +136,8 @@ class Board(object):
         else:
             _from, _to = move.lower().split('-')
 
-            piece, p_color, _ = self.get_square(_from)
-            d_piece, dp_color, _ = self.get_square(_to)
+            piece, p_color, _ = self.square(_from)
+            d_piece, dp_color, _ = self.square(_to)
 
             if (not piece or self._turn != p_color) \
                     or (d_piece and self._turn == dp_color):
@@ -137,10 +152,20 @@ class Board(object):
                 return None
 
     def generate_moves(self, _from):
-        piece, color, location = self.get_square(_from)
+        piece, color, loc = self.square(_from)
 
-        def pawn():  # NOSONAR
-            pass
+        def pawn():
+            def check8():
+                for i in range(1, 9):
+                    pass
+
+
+            if (loc[0] == 1 and color == PLAYERS_BITS.WHITE) \
+                    or (loc[0] == 7 and color == PLAYERS_BITS.BLACK):
+                if _from not in self.pawn_history:
+                    self.pawn_history.append(_from)
+                else:
+                    pass
 
         def rook():  # NOSONAR
             # TODO - Rook's legal movements.
