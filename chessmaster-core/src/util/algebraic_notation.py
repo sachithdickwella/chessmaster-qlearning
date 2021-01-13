@@ -38,7 +38,7 @@ class Board(object):
 
     def __init__(self):
         super(Board, self).__init__()
-        self.dimension = (8, 8)
+        self.dimension = (1, 7)
         self.pawn_history = []
 
         self.ranks = dict(zip(range(1, 9), range(8)))
@@ -151,28 +151,39 @@ class Board(object):
             else:
                 return None
 
-    def generate_moves(self, _from):
+    def generate_moves(self, _from):  # NOSONAR
         piece, color, loc = self.square(_from)
 
         def pawn():
             def check8():
-                for i in range(1, 9):
-                    pass
+                min_r, max_r = (loc[0] - 1 if loc[0] > 0 else 0, loc[0] + 1 if loc[0] < 7 else 8)
+                min_c, max_c = (loc[0] - 1 if loc[1] > 0 else 0, loc[1] + 1 if loc[1] < 7 else 8)
 
+                print(f'{min_r} : {max_r}')
+                print(f'{min_c} : {max_c}')
+
+                out = {}
+                for i in range(min_r, max_r):
+                    for j in range(min_c, max_c):
+                        if loc != (i, j):
+                            sq = self.square((i, j))
+                            if sq.color != self._turn and i != loc[0]:
+                                out[sq.location] = (FLAGS.CAPTURE, PIECES[sq.piece - 1])
+                            if not sq.piece and i > loc[0] and j == loc[0]:
+                                out[sq.location] = (FLAGS.NORMAL,)
+                return out
 
             if (loc[0] == 1 and color == PLAYERS_BITS.WHITE) \
                     or (loc[0] == 7 and color == PLAYERS_BITS.BLACK):
-                if _from not in self.pawn_history:
-                    self.pawn_history.append(_from)
+                if _from in self.pawn_history:
+                    return check8()
                 else:
-                    pass
+                    self.pawn_history.append(_from)
 
-        def rook():  # NOSONAR
-            # TODO - Rook's legal movements.
-            pass
-
-        # TODO - work on decision of valid move destinations.
-        return {'to': ('flag', 'captured')}
+        if PIECES[piece - 1] == PIECES.PAWN:
+            return pawn()
+        else:
+            return {'to': ('flag', 'captured')}
 
 
 class Move(object):
