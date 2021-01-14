@@ -175,18 +175,17 @@ class Board(object):
                                      or (i == loc[0] - 1 and color == PLAYERS_BITS.BLACK)):
                             out[_to.location] = (FLAGS.NORMAL,)
 
-            else:
-                if color == PLAYERS_BITS.WHITE and loc[0] == 1:
-                    _to = self.square((loc[0] + 2, loc[1]))
-                    if not _to.piece and _from not in self.pawn_history:
-                        self.pawn_history.append(_from)
-                        out[_to.location] = (FLAGS.BIG_PAWN,)
+            if color == PLAYERS_BITS.WHITE and loc[0] == 1:
+                _to = self.square((loc[0] + 2, loc[1]))
+                if not _to.piece and _from not in self.pawn_history:
+                    self.pawn_history.append(_from)
+                    out[_to.location] = (FLAGS.BIG_PAWN,)
 
-                elif color == PLAYERS_BITS.BLACK and loc[0] == 6:
-                    _to = self.square((loc[0] - 2, loc[1]))
-                    if not _to.piece and _from not in self.pawn_history:
-                        self.pawn_history.append(_from)
-                        out[_to.location] = (FLAGS.BIG_PAWN,)
+            elif color == PLAYERS_BITS.BLACK and loc[0] == 6:
+                _to = self.square((loc[0] - 2, loc[1]))
+                if not _to.piece and _from not in self.pawn_history:
+                    self.pawn_history.append(_from)
+                    out[_to.location] = (FLAGS.BIG_PAWN,)
 
             return out
 
