@@ -144,6 +144,7 @@ class Board(object):
                 return None
 
             moves = self.generate_moves(_from)
+            print(moves)
 
             if _to in moves:
                 # TODO - define a valid 'flag' and 'captured' value on return value.
@@ -166,15 +167,32 @@ class Board(object):
                 for i in range(min_r, max_r):
                     for j in range(min_c, max_c):
                         if loc != (i, j):
-                            sq = self.square((i, j))
-                            if sq.color != self._turn and i != loc[0]:
-                                out[sq.location] = (FLAGS.CAPTURE, PIECES[sq.piece - 1])
-                            if not sq.piece and i > loc[0] and j == loc[0]:
-                                out[sq.location] = (FLAGS.NORMAL,)
+                            _to = self.square((i, j))
+                            if _to.piece and _to.color != color and (j == loc[1] + 1 or j == loc[1] - 1):
+                                out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+
+                            elif not _to.piece and j == loc[0] \
+                                    and ((i == loc[0] + 1 and color == PLAYERS_BITS.WHITE)
+                                         or (i == loc[0] - 1 and color == PLAYERS_BITS.BLACK)):
+                                out[_to.location] = (FLAGS.NORMAL,)
+
+                else:
+                    if color == PLAYERS_BITS.WHITE and loc[0] == 1:
+                        _to = self.square((loc[0] + 2, loc[1]))
+                        if not _to.piece and _from not in self.pawn_history:
+                            self.pawn_history.append(_from)
+                            out[_to.location] = (FLAGS.BIG_PAWN,)
+
+                    elif color == PLAYERS_BITS.BLACK and loc[0] == 6:
+                        _to = self.square((loc[0] - 2, loc[1]))
+                        if not _to.piece and _from not in self.pawn_history:
+                            self.pawn_history.append(_from)
+                            out[_to.location] = (FLAGS.BIG_PAWN,)
+
                 return out
 
             if (loc[0] == 1 and color == PLAYERS_BITS.WHITE) \
-                    or (loc[0] == 7 and color == PLAYERS_BITS.BLACK):
+                    or (loc[0] == 6 and color == PLAYERS_BITS.BLACK):
                 if _from in self.pawn_history:
                     return check8()
                 else:
