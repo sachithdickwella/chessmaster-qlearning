@@ -156,47 +156,39 @@ class Board(object):
         piece, color, loc = self.square(_from)
 
         def pawn():
-            def check8():
-                min_r, max_r = (loc[0] - 1 if loc[0] > 0 else 0, loc[0] + 1 if loc[0] < 7 else 8)
-                min_c, max_c = (loc[0] - 1 if loc[1] > 0 else 0, loc[1] + 1 if loc[1] < 7 else 8)
+            min_r, max_r = (loc[0] - 1 if loc[0] > 0 else 0, loc[0] + 1 if loc[0] < 7 else 8)
+            min_c, max_c = (loc[0] - 1 if loc[1] > 0 else 0, loc[1] + 1 if loc[1] < 7 else 8)
 
-                print(f'{min_r} : {max_r}')
-                print(f'{min_c} : {max_c}')
+            print(f'{min_r} : {max_r}')
+            print(f'{min_c} : {max_c}')
 
-                out = {}
-                for i in range(min_r, max_r):
-                    for j in range(min_c, max_c):
-                        if loc != (i, j):
-                            _to = self.square((i, j))
-                            if _to.piece and _to.color != color and (j == loc[1] + 1 or j == loc[1] - 1):
-                                out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+            out = {}
+            for i in range(min_r, max_r):
+                for j in range(min_c, max_c):
+                    if loc != (i, j):
+                        _to = self.square((i, j))
+                        if _to.piece and _to.color != color and (j == loc[1] + 1 or j == loc[1] - 1):
+                            out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
 
-                            elif not _to.piece and j == loc[0] \
-                                    and ((i == loc[0] + 1 and color == PLAYERS_BITS.WHITE)
-                                         or (i == loc[0] - 1 and color == PLAYERS_BITS.BLACK)):
-                                out[_to.location] = (FLAGS.NORMAL,)
+                        elif not _to.piece and j == loc[0] \
+                                and ((i == loc[0] + 1 and color == PLAYERS_BITS.WHITE)
+                                     or (i == loc[0] - 1 and color == PLAYERS_BITS.BLACK)):
+                            out[_to.location] = (FLAGS.NORMAL,)
 
-                else:
-                    if color == PLAYERS_BITS.WHITE and loc[0] == 1:
-                        _to = self.square((loc[0] + 2, loc[1]))
-                        if not _to.piece and _from not in self.pawn_history:
-                            self.pawn_history.append(_from)
-                            out[_to.location] = (FLAGS.BIG_PAWN,)
+            else:
+                if color == PLAYERS_BITS.WHITE and loc[0] == 1:
+                    _to = self.square((loc[0] + 2, loc[1]))
+                    if not _to.piece and _from not in self.pawn_history:
+                        self.pawn_history.append(_from)
+                        out[_to.location] = (FLAGS.BIG_PAWN,)
 
-                    elif color == PLAYERS_BITS.BLACK and loc[0] == 6:
-                        _to = self.square((loc[0] - 2, loc[1]))
-                        if not _to.piece and _from not in self.pawn_history:
-                            self.pawn_history.append(_from)
-                            out[_to.location] = (FLAGS.BIG_PAWN,)
+                elif color == PLAYERS_BITS.BLACK and loc[0] == 6:
+                    _to = self.square((loc[0] - 2, loc[1]))
+                    if not _to.piece and _from not in self.pawn_history:
+                        self.pawn_history.append(_from)
+                        out[_to.location] = (FLAGS.BIG_PAWN,)
 
-                return out
-
-            if (loc[0] == 1 and color == PLAYERS_BITS.WHITE) \
-                    or (loc[0] == 6 and color == PLAYERS_BITS.BLACK):
-                if _from in self.pawn_history:
-                    return check8()
-                else:
-                    self.pawn_history.append(_from)
+            return out
 
         if PIECES[piece - 1] == PIECES.PAWN:
             return pawn()
