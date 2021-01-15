@@ -116,7 +116,7 @@ class Board(object):
             else:
                 try:
                     file_letter = next(k for k, v in self.f_letters.items() if v == san[1])
-                    rank = next(k for k, v in self.ranks.items() if v == ((len(self.ranks) - 1)- san[0]))
+                    rank = next(k for k, v in self.ranks.items() if v == ((len(self.ranks) - 1) - san[0]))
 
                     san = file_letter + str(rank)
                     square = self.square(san)
@@ -178,13 +178,18 @@ class Board(object):
                 for j in range(min_c, max_c + 1):
                     if loc != (i, j):
                         _to = self.square((i, j))
-                        if _to.piece and _to.color != color and i != loc[0] and (j == loc[1] + 1 or j == loc[1] - 1):
+                        if _to.piece and _to.color != color \
+                                and ((i > loc[0] and self._turn == PLAYERS_BITS.BLACK)
+                                     or (i < loc[0] and self._turn == PLAYERS_BITS.WHITE)) \
+                                and (j == loc[1] + 1 or j == loc[1] - 1):
                             out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
 
                         elif not _to.piece and j == loc[1] \
                                 and ((i == loc[0] + 1 and self._turn == PLAYERS_BITS.BLACK)
                                      or (i == loc[0] - 1 and self._turn == PLAYERS_BITS.WHITE)):
                             out[_to.location] = (FLAGS.NORMAL,)
+
+                        # elif not _to.piece and
 
             if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
                 _to = self.square((loc[0] + 2, loc[1]))
@@ -198,8 +203,13 @@ class Board(object):
 
             return out
 
+        def rook():  # NOSONAR
+            pass
+
         if PIECES[piece - 1] == PIECES.PAWN:
             return pawn()
+        elif PIECES[piece - 1] == PIECES.ROOK:
+            return rook()
         else:
             return {}
 
