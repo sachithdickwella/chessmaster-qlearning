@@ -34,12 +34,42 @@ FLAGS = namedtuple('Flags', ('NORMAL',
 PIECES = namedtuple('Pieces', ('PAWN', 'KNIGHT', 'BISHOP', 'ROOK', 'QUEEN', 'KING'))(*'pnbrqk')
 
 
+class Move(object):
+
+    def __init__(self, color, _from, _to, piece, san, flag, captured=None):
+        super(Move, self).__init__()
+
+        self.color = color
+        self.flag = flag
+        self._from = _from
+        self._to = _to
+        self.piece = piece
+        self.san = san
+        self.captured = captured
+
+    def __str__(self):
+        return str(self.dict())
+
+    def dict(self):
+        details: dict = {
+            'color': self.color,
+            'flag': self.flag,
+            'from': self._from,
+            'to': self._to,
+            'piece': self.piece,
+            'san': self.san
+        }
+
+        if self.captured is not None:
+            details['captured'] = self.captured
+        return details
+
+
 class Board(object):
 
     def __init__(self):
         super(Board, self).__init__()
-        self.dimension = (1, 7)
-        self.pawn_history = []
+        self.pawn_1st_move = {}
 
         self.ranks = dict(zip(range(1, 9), range(8)))
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
@@ -78,12 +108,12 @@ class Board(object):
 
         return board, _board
 
-    def update_board(self, _from, _to):
+    def update_board(self, _from, _to, flag):
         f_piece, _, f_loc = self.square(_from)
         _, _, t_loc = self.square(_to)
 
-        if PIECES[f_piece - 1] == PIECES.PAWN and _from not in self.pawn_history:
-            self.pawn_history.append(_from)
+        if PIECES[f_piece - 1] == PIECES.PAWN and _from not in self.pawn_1st_move:
+            self.pawn_1st_move[_from] = (_to, flag)
 
         self._board[t_loc] = self._board[f_loc]
         self.c_board[t_loc] = self.c_board[f_loc]
@@ -159,7 +189,7 @@ class Board(object):
             print(moves)
 
             if _to in moves:
-                self.update_board(_from, _to)
+                self.update_board(_from, _to, moves[_to][0])
                 self.toggle_player()
 
                 return Move(p_color, _from, _to, piece, f'{piece}{_to}', *moves[_to])
@@ -173,7 +203,7 @@ class Board(object):
             min_r, max_r = (loc[0] - 1 if loc[0] > 0 else 0, loc[0] + 1 if loc[0] < 7 else 7)
             min_c, max_c = (loc[1] - 1 if loc[1] > 0 else 0, loc[1] + 1 if loc[1] < 7 else 7)
 
-            out = {}  # Structure -> {'to': ('flag', 'captured')}
+            out = {}  # Structure -> {'to': ('flag', 'captured=n|c|b|e|p|k|q')}
             for i in range(min_r, max_r + 1):
                 for j in range(min_c, max_c + 1):
                     if loc != (i, j):
@@ -189,16 +219,24 @@ class Board(object):
                                      or (i == loc[0] - 1 and self._turn == PLAYERS_BITS.WHITE)):
                             out[_to.location] = (FLAGS.NORMAL,)
 
-                        # elif not _to.piece and
+                        elif not _to.piece \
+                                and ((self._turn == PLAYERS_BITS.BLACK and loc[0] == 4)
+                                     or (self._turn == PLAYERS_BITS.WHITE and loc[0] == 3)) \
+                                and loc[0] == i and (loc[1] > j or loc[1] < j):
+
+                            en_passant = self.square((i, j))
+                            if en_passant.color != color and
+
+                            out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[_to.piece - 1])
 
             if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
                 _to = self.square((loc[0] + 2, loc[1]))
-                if not _to.piece and _from not in self.pawn_history:
+                if not _to.piece and _from not in self.pawn_1st_move:
                     out[_to.location] = (FLAGS.BIG_PAWN,)
 
             elif self._turn == color and color == PLAYERS_BITS.WHITE and loc[0] == 6:
                 _to = self.square((loc[0] - 2, loc[1]))
-                if not _to.piece and _from not in self.pawn_history:
+                if not _to.piece and _from not in self.pawn_1st_move:
                     out[_to.location] = (FLAGS.BIG_PAWN,)
 
             return out
@@ -212,34 +250,3 @@ class Board(object):
             return rook()
         else:
             return {}
-
-
-class Move(object):
-
-    def __init__(self, color, _from, _to, piece, san, flag, captured=None):
-        super(Move, self).__init__()
-
-        self.color = color
-        self.flag = flag
-        self._from = _from
-        self._to = _to
-        self.piece = piece
-        self.san = san
-        self.captured = captured
-
-    def __str__(self):
-        return str(self.dict())
-
-    def dict(self):
-        details: dict = {
-            'color': self.color,
-            'flag': self.flag,
-            'from': self._from,
-            'to': self._to,
-            'piece': self.piece,
-            'san': self.san
-        }
-
-        if self.captured is not None:
-            details['captured'] = self.captured
-        return details
