@@ -3,7 +3,7 @@
 
 import os
 
-from util import server_access, IMAGE_PATH, LOG_PATH, TEMP_PATH
+from utils import server_access, IMAGE_PATH, LOG_PATH, TEMP_PATH
 
 if __name__ == '__main__':
     os.makedirs(IMAGE_PATH, exist_ok=True)
@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     server_access.init()
 
-    # from util.algebraic_notation import Board
+    # from utils.algebraic_notation import Board
     #
     # san = Board()
     # print(san._board)

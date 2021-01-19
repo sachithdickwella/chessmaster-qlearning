@@ -112,8 +112,12 @@ class Board(object):
         f_piece, _, f_loc = self.square(_from)
         _, _, t_loc = self.square(_to)
 
-        if PIECES[f_piece - 1] == PIECES.PAWN and _from not in self.last_move:  # Yet strict for PAWNs.
+        if PIECES[f_piece - 1] == PIECES.PAWN:  # Yet strict for PAWNs.
             self.last_move[_from] = (_to, flag)
+
+            if flag == FLAGS.EP_CAPTURE:
+                idx = 1 if self._turn == PLAYERS_BITS.WHITE else -1
+                self._board[t_loc[0] + idx, t_loc[1]] = self.c_board[t_loc[0] + idx, t_loc[1]] = 0
 
         self._board[t_loc] = self._board[f_loc]
         self.c_board[t_loc] = self.c_board[f_loc]
@@ -219,17 +223,17 @@ class Board(object):
                                      or (i == loc[0] - 1 and self._turn == PLAYERS_BITS.WHITE)):
                             out[_to.location] = (FLAGS.NORMAL,)
 
-                        # TODO - Revalidate the below logic for confirmation.
                         elif not _to.piece and j != loc[1] \
                                 and ((self._turn == PLAYERS_BITS.BLACK and loc[0] == 4 and i == loc[0] + 1)
-                                     or (self._turn == PLAYERS_BITS.WHITE and loc[0] == 3) and i == loc[0] - 1) \
-                                and loc[0] == i and (loc[1] > j or loc[1] < j):
+                                     or (self._turn == PLAYERS_BITS.WHITE and loc[0] == 3) and i == loc[0] - 1):
 
-                            en_passant = self.square((i, j))
-                            if en_passant.color != color \
+                            en_passant = self.square((i - 1, j)) if self._turn == PLAYERS_BITS.BLACK \
+                                else self.square((i + 1, j))
+
+                            if en_passant.piece and en_passant.color != color \
                                     and next(fl for k, (to, fl) in self.last_move.items()
                                              if to == en_passant.location) == FLAGS.BIG_PAWN:
-                                out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[_to.piece - 1])
+                                out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[en_passant.piece - 1])
 
             if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
                 _to = self.square((loc[0] + 2, loc[1]))
