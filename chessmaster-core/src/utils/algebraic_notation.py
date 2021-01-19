@@ -252,9 +252,25 @@ class Board(object):
         def rook():  # NOSONAR
             pass
 
-        if PIECES[piece - 1] == PIECES.PAWN:
-            return pawn()
-        elif PIECES[piece - 1] == PIECES.ROOK:
-            return rook()
-        else:
-            return {}
+        def knight():  # NOSONAR
+            pass
+
+        def bishop():  # NOSONAR
+            pass
+
+        def queen():  # NOSONAR
+            pass
+
+        def king():  # NOSONAR
+            pass
+
+        switch = {
+            PIECES.PAWN: pawn,
+            PIECES.ROOK: rook,
+            PIECES.KNIGHT: knight,
+            PIECES.BISHOP: bishop,
+            PIECES.QUEEN: queen,
+            PIECES.KING: king
+        }
+
+        return switch.get(PIECES[piece - 1], None)()
