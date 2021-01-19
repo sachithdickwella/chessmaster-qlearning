@@ -4,7 +4,7 @@ import cv2
 from torch.utils.data import DataLoader
 from torchvision import transforms as T
 
-from util import IMAGE_PATH, LOGGER, IMAGE_SIZE
+from utils import IMAGE_PATH, LOGGER, IMAGE_SIZE
 from . import BATCH_SIZE, NUM_WORKER, IS_CUDA, ToColor, ChessBoardDataset
 
 

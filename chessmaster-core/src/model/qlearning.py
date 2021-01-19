@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from util import TEMP_PATH, LOGGER
+from utils import TEMP_PATH, LOGGER
 from . import DEVICE, BATCH_SIZE, GAMMA, EPS_START, EPS_END, EPS_DECAY, TARGET_UPDATE
 
 TRANSITIONS = namedtuple('Transitions', ['piece', 'state', 'action', 'next_state', 'reward'])
