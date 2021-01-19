@@ -69,7 +69,7 @@ class Board(object):
 
     def __init__(self):
         super(Board, self).__init__()
-        self.last_move = {}
+        self.pawns_history = {}
 
         self.ranks = dict(zip(range(1, 9), range(8)))
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
@@ -112,8 +112,8 @@ class Board(object):
         f_piece, _, f_loc = self.square(_from)
         _, _, t_loc = self.square(_to)
 
-        if PIECES[f_piece - 1] == PIECES.PAWN:  # Yet strict for PAWNs.
-            self.last_move[_from] = (_to, flag)
+        if PIECES[f_piece - 1] == PIECES.PAWN:  # Strictly for PAWNs only.
+            self.pawns_history[_from] = (_to, flag)
 
             if flag == FLAGS.EP_CAPTURE:
                 idx = 1 if self._turn == PLAYERS_BITS.WHITE else -1
@@ -227,22 +227,22 @@ class Board(object):
                                 and ((self._turn == PLAYERS_BITS.BLACK and loc[0] == 4 and i == loc[0] + 1)
                                      or (self._turn == PLAYERS_BITS.WHITE and loc[0] == 3) and i == loc[0] - 1):
 
-                            en_passant = self.square((i - 1, j)) if self._turn == PLAYERS_BITS.BLACK \
+                            enp = self.square((i - 1, j)) if self._turn == PLAYERS_BITS.BLACK \
                                 else self.square((i + 1, j))
 
-                            if en_passant.piece and en_passant.color != color \
-                                    and next(fl for k, (to, fl) in self.last_move.items()
-                                             if to == en_passant.location) == FLAGS.BIG_PAWN:
-                                out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[en_passant.piece - 1])
+                            if enp.piece and enp.color != color \
+                                    and next(f for _, (t, f) in self.pawns_history.items()
+                                             if t == enp.location) == FLAGS.BIG_PAWN:
+                                out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[enp.piece - 1])
 
             if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
                 _to = self.square((loc[0] + 2, loc[1]))
-                if not _to.piece and _from not in self.last_move:
+                if not _to.piece and _from not in self.pawns_history:
                     out[_to.location] = (FLAGS.BIG_PAWN,)
 
             elif self._turn == color and color == PLAYERS_BITS.WHITE and loc[0] == 6:
                 _to = self.square((loc[0] - 2, loc[1]))
-                if not _to.piece and _from not in self.last_move:
+                if not _to.piece and _from not in self.pawns_history:
                     out[_to.location] = (FLAGS.BIG_PAWN,)
 
             return out
