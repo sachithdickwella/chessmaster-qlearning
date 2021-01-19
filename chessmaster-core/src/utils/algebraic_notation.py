@@ -232,7 +232,9 @@ class Board(object):
 
                             if enp.piece and enp.color != color \
                                     and next(f for _, (t, f) in self.pawns_history.items()
-                                             if t == enp.location) == FLAGS.BIG_PAWN:
+                                             if t == enp.location) == FLAGS.BIG_PAWN \
+                                    and len(self.pawns_history) == [lo for lo, _ in self.pawns_history.values()] \
+                                    .index(enp.location) + 1:
                                 out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[enp.piece - 1])
 
             if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
