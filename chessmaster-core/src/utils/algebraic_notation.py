@@ -202,32 +202,32 @@ class Board(object):
 
     def generate_moves(self, _from):  # NOSONAR
         piece, color, loc = self.square(_from)
+        out = {}  # Structure -> {'to': ('flag', 'captured=n|c|b|e|p|k|q')}
 
         def pawn():
             min_r, max_r = (loc[0] - 1 if loc[0] > 0 else 0, loc[0] + 1 if loc[0] < 7 else 7)
             min_c, max_c = (loc[1] - 1 if loc[1] > 0 else 0, loc[1] + 1 if loc[1] < 7 else 7)
 
-            out = {}  # Structure -> {'to': ('flag', 'captured=n|c|b|e|p|k|q')}
             for i in range(min_r, max_r + 1):
                 for j in range(min_c, max_c + 1):
                     if loc != (i, j):
                         _to = self.square((i, j))
                         if _to.piece and _to.color != color \
-                                and ((i > loc[0] and self._turn == PLAYERS_BITS.BLACK)
-                                     or (i < loc[0] and self._turn == PLAYERS_BITS.WHITE)) \
+                                and ((i > loc[0] and color == PLAYERS_BITS.BLACK)
+                                     or (i < loc[0] and color == PLAYERS_BITS.WHITE)) \
                                 and (j == loc[1] + 1 or j == loc[1] - 1):
                             out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
 
                         elif not _to.piece and j == loc[1] \
-                                and ((i == loc[0] + 1 and self._turn == PLAYERS_BITS.BLACK)
-                                     or (i == loc[0] - 1 and self._turn == PLAYERS_BITS.WHITE)):
+                                and ((i == loc[0] + 1 and color == PLAYERS_BITS.BLACK)
+                                     or (i == loc[0] - 1 and color == PLAYERS_BITS.WHITE)):
                             out[_to.location] = (FLAGS.NORMAL,)
 
                         elif not _to.piece and j != loc[1] \
-                                and ((self._turn == PLAYERS_BITS.BLACK and loc[0] == 4 and i == loc[0] + 1)
-                                     or (self._turn == PLAYERS_BITS.WHITE and loc[0] == 3) and i == loc[0] - 1):
+                                and ((color == PLAYERS_BITS.BLACK and loc[0] == 4 and i == loc[0] + 1)
+                                     or (color == PLAYERS_BITS.WHITE and loc[0] == 3) and i == loc[0] - 1):
 
-                            enp = self.square((i - 1, j)) if self._turn == PLAYERS_BITS.BLACK \
+                            enp = self.square((i - 1, j)) if color == PLAYERS_BITS.BLACK \
                                 else self.square((i + 1, j))
 
                             if enp.piece and enp.color != color \
@@ -249,8 +249,36 @@ class Board(object):
 
             return out
 
-        def rook():  # NOSONAR
-            pass
+        def rook():
+            def pick(i, j):
+                _to = self.square((i, j))
+
+                if not _to.piece:
+                    out[_to.location] = (FLAGS.NORMAL,)
+                    return True
+                elif _to.piece and color != _to.color:
+                    out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+                    return False
+                elif _to.piece and color == _to.color:
+                    return False
+
+            for up in range(loc[0] + 1, 8):
+                if not pick(up, loc[1]):
+                    break
+
+            for down in reversed(range(0, loc[0])):
+                if not pick(down, loc[1]):
+                    break
+
+            for right in range(loc[1] + 1, 8):
+                if not pick(loc[0], right):
+                    break
+
+            for left in reversed(range(0, loc[1])):
+                if not pick(loc[0], left):
+                    break
+
+            return out
 
         def knight():  # NOSONAR
             pass
