@@ -278,8 +278,21 @@ class Board(object):
                     break
             return out
 
-        def knight():  # NOSONAR
-            pass
+        def knight():
+            def pick(_to):
+                if not _to.piece:
+                    out[_to.location] = (FLAGS.NORMAL,)
+                elif _to.piece and _to.color != color:
+                    out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+
+            for i in [2, -2]:
+                for j in [1, -1]:
+                    if (0 <= loc[0] + i <= 7) and (0 <= loc[1] + j <= 7):
+                        pick(self.square((loc[0] + i, loc[1] + j)))
+
+                    if (0 <= loc[0] + j <= 7) and (0 <= loc[1] + i <= 7):
+                        pick(self.square((loc[0] + j, loc[1] + i)))
+            return out
 
         def bishop():  # NOSONAR
             pass
