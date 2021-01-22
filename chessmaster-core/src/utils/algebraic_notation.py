@@ -246,7 +246,6 @@ class Board(object):
                 _to = self.square((loc[0] - 2, loc[1]))
                 if not _to.piece and _from not in self.pawns_history:
                     out[_to.location] = (FLAGS.BIG_PAWN,)
-
             return out
 
         def rook():
@@ -277,7 +276,6 @@ class Board(object):
             for left in reversed(range(0, loc[1])):
                 if not pick(loc[0], left):
                     break
-
             return out
 
         def knight():  # NOSONAR
