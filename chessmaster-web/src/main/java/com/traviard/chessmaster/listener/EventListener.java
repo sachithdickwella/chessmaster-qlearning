@@ -1,6 +1,6 @@
 package com.traviard.chessmaster.listener;
 
-import com.traviard.chessmaster.component.StaticClientComponent;
+import com.traviard.chessmaster.component.StaticClientWriterComponent;
 import com.traviard.chessmaster.util.AppConstants;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -20,10 +20,10 @@ public abstract class EventListener {
      */
     private final Logger logger;
     /**
-     * Instance of {@link StaticClientComponent} to access external server socket
+     * Instance of {@link StaticClientWriterComponent} to access external server socket
      * to push content.
      */
-    private final StaticClientComponent serverComponent;
+    private final StaticClientWriterComponent serverComponent;
 
     /**
      * Protected constructor to initialize local members of {@link #logger} for logging
@@ -33,7 +33,7 @@ public abstract class EventListener {
      * @param serverComponent to make socket communications with downstream programs.
      */
     protected EventListener(@NotNull Class<? extends EventListener> clazz,
-                            @NotNull StaticClientComponent serverComponent) {
+                            @NotNull StaticClientWriterComponent serverComponent) {
         this.logger = LoggerFactory.getLogger(clazz);
         this.serverComponent = serverComponent;
     }

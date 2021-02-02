@@ -1,6 +1,6 @@
 package com.traviard.chessmaster.endpoint;
 
-import com.traviard.chessmaster.component.StaticClientComponent;
+import com.traviard.chessmaster.component.StaticClientWriterComponent;
 import com.traviard.chessmaster.util.NextMove;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -47,10 +47,10 @@ public class MovementController {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(MovementController.class);
     /**
-     * Instance of {@link StaticClientComponent} to access external server socket
+     * Instance of {@link StaticClientWriterComponent} to access external server socket
      * to push content.
      */
-    private final StaticClientComponent serverComponent;
+    private final StaticClientWriterComponent serverComponent;
     /**
      * Instance of {@link SimpMessagingTemplate} to send messages.
      */
@@ -64,7 +64,7 @@ public class MovementController {
      * @param template        to send WebSocket responses initiate by the server.
      */
     @Autowired
-    public MovementController(@NotNull StaticClientComponent serverComponent,
+    public MovementController(@NotNull StaticClientWriterComponent serverComponent,
                               @NotNull SimpMessagingTemplate template) {
         this.serverComponent = serverComponent;
         this.template = template;
@@ -83,6 +83,7 @@ public class MovementController {
      * @param request {@link HttpServletRequest} instance for the current request.
      * @return instance of {@link ResponseEntity} to tell the file upload status.
      */
+    @SuppressWarnings("java:S2629")
     @PostMapping(path = "/grab", consumes = MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> grabImage(@RequestParam("frame1") MultipartFile frame1,
                                           @RequestParam("frame2") MultipartFile frame2,
@@ -135,6 +136,7 @@ public class MovementController {
      * @param nextMove of {@link NextMove} instance make the UI update.
      * @return instance of {@link ResponseEntity} to tell the next move submit status.
      */
+    @SuppressWarnings("java:S2629")
     @PostMapping(path = "/next", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> nextMove(@RequestBody NextMove nextMove) {
         LOGGER.info(INFO_RESPONSE_FROM_PYTHON_MODEL.message(nextMove));

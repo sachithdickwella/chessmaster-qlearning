@@ -1,6 +1,6 @@
 package com.traviard.chessmaster.listener;
 
-import com.traviard.chessmaster.component.StaticClientComponent;
+import com.traviard.chessmaster.component.StaticClientWriterComponent;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ public class ApplicationContextListener extends EventListener implements Servlet
      * @param serverComponent which inject by the Application Context.
      */
     @Autowired
-    public ApplicationContextListener(@NotNull StaticClientComponent serverComponent) {
+    public ApplicationContextListener(@NotNull StaticClientWriterComponent serverComponent) {
         super(ApplicationContextListener.class, serverComponent);
     }
 
