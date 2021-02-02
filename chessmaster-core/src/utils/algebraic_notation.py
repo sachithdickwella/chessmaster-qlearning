@@ -196,6 +196,9 @@ class Board(object):
                 self.update_board(_from, _to, moves[_to][0])
                 self.toggle_player()
 
+                piece = PIECES[piece - 1]
+                p_color = PLAYERS[p_color - 1]
+
                 return Move(p_color, _from, _to, piece, f'{piece}{_to}', *moves[_to])
             else:
                 return None
