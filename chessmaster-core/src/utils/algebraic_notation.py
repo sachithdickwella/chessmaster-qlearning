@@ -1,4 +1,4 @@
-# Copyright 2020 Sachith Prasanna Dickwella (sdickwella@outlook.com)
+# Copyright 2020 Sachith Prasanna Dickwella (sachith_prasanna@live.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -237,15 +237,20 @@ class Board(object):
                                     .index(enp.location) + 1:
                                 out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[enp.piece - 1])
 
-            if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
-                _to = self.square((loc[0] + 2, loc[1]))
-                if not _to.piece and _from not in self.pawns_history:
-                    out[_to.location] = (FLAGS.BIG_PAWN,)
+            for rank in range(2):
+                if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
+                    _to = self.square((loc[0] + rank + 1, loc[1]))
+                    if not rank and _to.piece:
+                        break
+                    elif rank and not _to.piece and _from not in self.pawns_history:
+                        out[_to.location] = (FLAGS.BIG_PAWN,)
 
-            elif self._turn == color and color == PLAYERS_BITS.WHITE and loc[0] == 6:
-                _to = self.square((loc[0] - 2, loc[1]))
-                if not _to.piece and _from not in self.pawns_history:
-                    out[_to.location] = (FLAGS.BIG_PAWN,)
+                elif self._turn == color and color == PLAYERS_BITS.WHITE and loc[0] == 6:
+                    _to = self.square((loc[0] - rank - 1, loc[1]))
+                    if not rank and _to.piece:
+                        break
+                    elif rank and not _to.piece and _from not in self.pawns_history:
+                        out[_to.location] = (FLAGS.BIG_PAWN,)
             return out
 
         def rook():
