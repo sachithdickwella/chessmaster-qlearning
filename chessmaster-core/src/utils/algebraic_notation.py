@@ -1,4 +1,4 @@
-# Copyright 2020 Sachith Prasanna Dickwella (sdickwella@outlook.com)
+# Copyright 2020 Sachith Prasanna Dickwella (sachith_prasanna@live.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,8 +35,39 @@ PIECES = namedtuple('Pieces', ('PAWN', 'KNIGHT', 'BISHOP', 'ROOK', 'QUEEN', 'KIN
 
 
 class Move(object):
+    """
+    Instances of this class hold the information of successful move of any pieces despite
+    the color and location. These information would be required to determine move history,
+    movement pattern of each user for whatever the downstream program.
+
+    One :class:`Move` instance includes the details if;
+
+    * color - which color has been moved.
+    * _from - source square location of the move initiated from.
+    * _to - destination square location of the move lasts.
+    * piece - chess piece name which is moved.
+    * san - standard algebraic notation for the move. May not use by the downstream program.
+    * flag - if the something special happens besides a simple move, flag character for that
+             move.
+    * captured - flag if the movement captured a opponent's piece and that piece's name.
+
+    This class instances generate by the :class:`Board` during the successful movement from a
+    player despite the color.
+    """
 
     def __init__(self, color, _from, _to, piece, san, flag, captured=None):
+        """
+        Initialize :class:`Move` instances with the default member values generated from the
+        movement by :class:`Board`.
+
+        :param color: which color this movement originated from.
+        :param _from: source square location of the move initiated from.
+        :param _to: destination/target square location which the piece successfully moved.
+        :param piece: chess piece name which this move originated.
+        :param san: standard algebraic notation for the moves.
+        :param flag: if something significant happens during this movement.
+        :param captured: flag if the movement captured a opponent's piece and that piece's name.
+        """
         super(Move, self).__init__()
 
         self.color = color
@@ -48,9 +79,20 @@ class Move(object):
         self.captured = captured
 
     def __str__(self):
+        """
+        Get the :class:`string` representation of the :class:`Move` class from :func:`self.dict`
+        method return value.
+
+        :return: the :class:`string` representation of the :class:`Move` as a dictionary format.
+        """
         return str(self.dict())
 
     def dict(self):
+        """
+        Get the entire class structure including its members as :class:`dict` object.
+
+        :return: the :class:`dict` instance with class members and their values.
+        """
         details: dict = {
             'color': self.color,
             'flag': self.flag,
@@ -132,7 +174,6 @@ class Board(object):
         :param san: algebraic notation of the square (ex: e4, a8, b6).
         :return: the square value for input algebraic notation.
         """
-
         if type(san) is not str and type(san) is not tuple:
             raise TypeError('Item index should be string Algebraic Notation or Tuple index location')
         elif type(san) is str and not re.match('^[a-hA-H][1-8]$', san):
@@ -161,7 +202,7 @@ class Board(object):
 
     def toggle_player(self):
         """
-        Toggle the :func:`~self._turn` value depending on the current value. Nothing returns.
+        Toggle the attribute::self._turn value depending on the current value. Nothing returns.
         """
         self._turn = PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
@@ -172,7 +213,7 @@ class Board(object):
 
         :param move: algebraic notation of 2 squares that the piece should moved from
         and the destination (ex: b2-b4).
-        :return: an instance of :func:`~Move` class with the details of source, target,
+        :return: an instance of :class:`Move` class with the details of source, target,
         color, flag, target SAN and piece if it's legal move. Otherwise 'None' returns.
         """
         if type(move) is not str:
@@ -195,6 +236,9 @@ class Board(object):
             if _to in moves:
                 self.update_board(_from, _to, moves[_to][0])
                 self.toggle_player()
+
+                piece = PIECES[piece - 1]
+                p_color = PLAYERS[p_color - 1]
 
                 return Move(p_color, _from, _to, piece, f'{piece}{_to}', *moves[_to])
             else:
@@ -237,15 +281,20 @@ class Board(object):
                                     .index(enp.location) + 1:
                                 out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[enp.piece - 1])
 
-            if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
-                _to = self.square((loc[0] + 2, loc[1]))
-                if not _to.piece and _from not in self.pawns_history:
-                    out[_to.location] = (FLAGS.BIG_PAWN,)
+            for rank in range(2):
+                if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
+                    _to = self.square((loc[0] + rank + 1, loc[1]))
+                    if not rank and _to.piece:
+                        break
+                    elif rank and not _to.piece and _from not in self.pawns_history:
+                        out[_to.location] = (FLAGS.BIG_PAWN,)
 
-            elif self._turn == color and color == PLAYERS_BITS.WHITE and loc[0] == 6:
-                _to = self.square((loc[0] - 2, loc[1]))
-                if not _to.piece and _from not in self.pawns_history:
-                    out[_to.location] = (FLAGS.BIG_PAWN,)
+                elif self._turn == color and color == PLAYERS_BITS.WHITE and loc[0] == 6:
+                    _to = self.square((loc[0] - rank - 1, loc[1]))
+                    if not rank and _to.piece:
+                        break
+                    elif rank and not _to.piece and _from not in self.pawns_history:
+                        out[_to.location] = (FLAGS.BIG_PAWN,)
             return out
 
         def rook():
