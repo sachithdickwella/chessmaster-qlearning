@@ -1,6 +1,6 @@
 package com.traviard.chessmaster.listener;
 
-import com.traviard.chessmaster.component.StaticClientComponent;
+import com.traviard.chessmaster.component.StaticClientWriterComponent;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +34,7 @@ public class HttpWebSessionListener extends EventListener implements HttpSession
      * @param serverComponent which inject by the Application Context.
      */
     @Autowired
-    public HttpWebSessionListener(@NotNull StaticClientComponent serverComponent) {
+    public HttpWebSessionListener(@NotNull StaticClientWriterComponent serverComponent) {
         super(HttpWebSessionListener.class, serverComponent);
     }
 

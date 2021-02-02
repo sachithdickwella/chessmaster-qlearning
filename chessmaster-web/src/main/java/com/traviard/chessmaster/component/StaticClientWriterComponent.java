@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This {@link StaticClientComponent} to manage and manipulate Python (backend)
+ * This {@link StaticClientWriterComponent} to manage and manipulate Python (backend)
  * program input and output results.
  * <p>
  * This is a custom TCP server program to listen and communicate with the
@@ -29,7 +29,7 @@ import java.util.List;
  */
 @PropertySource("classpath:app-config.properties")
 @Component
-public class StaticClientComponent {
+public class StaticClientWriterComponent {
 
     /**
      * The host name of the server program.
