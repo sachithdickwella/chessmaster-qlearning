@@ -310,21 +310,6 @@ class Board(object):
                 elif _to.piece and color == _to.color:
                     return False
 
-            for up in range(loc[0] + 1, 8):
-                if not pick(up, loc[1]):
-                    break
-
-            for down in reversed(range(0, loc[0])):
-                if not pick(down, loc[1]):
-                    break
-
-            for right in range(loc[1] + 1, 8):
-                if not pick(loc[0], right):
-                    break
-
-            for left in reversed(range(0, loc[1])):
-                if not pick(loc[0], left):
-                    break
             return out
 
         def knight():
