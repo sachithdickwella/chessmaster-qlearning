@@ -303,13 +303,28 @@ class Board(object):
 
                 if not _to.piece:
                     out[_to.location] = (FLAGS.NORMAL,)
-                    return True
+                    return False
                 elif _to.piece and color != _to.color:
                     out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
-                    return False
+                    return True
                 elif _to.piece and color == _to.color:
-                    return False
+                    return True
 
+            pos, max_idx = [], max(np.concatenate([[8, 8] - np.array(loc), np.array(loc)]))
+
+            for x in range(max_idx):
+                if 0 <= loc[0] + x + 1 < 8 and 'd' not in pos \
+                        and pick(loc[0] + x + 1, loc[1]):
+                    pos.append('d')
+                if 0 <= loc[0] - x - 1 < 8 and 'u' not in pos \
+                        and pick(loc[0] - x - 1, loc[1]):
+                    pos.append('u')
+                if 0 <= loc[1] + x + 1 < 8 and 'r' not in pos \
+                        and pick(loc[0], loc[1] + x + 1):
+                    pos.append('r')
+                if 0 <= loc[1] - x - 1 < 8 and 'l' not in pos \
+                        and pick(loc[0], loc[1] - x - 1):
+                    pos.append('l')
             return out
 
         def knight():
