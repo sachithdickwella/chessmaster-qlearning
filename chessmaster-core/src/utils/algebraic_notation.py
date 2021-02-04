@@ -371,8 +371,10 @@ class Board(object):
                     pos.append('ul')
             return out
 
-        def queen(pick, pos, _max):  # NOSONAR
-            pass
+        def queen(pick, pos, _max):
+            rook(pick, pos, _max)
+            bishop(pick, pos, _max)
+            return out
 
         def king():  # NOSONAR
             pass
