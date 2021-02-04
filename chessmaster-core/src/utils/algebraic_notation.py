@@ -248,6 +248,32 @@ class Board(object):
         piece, color, loc = self.square(_from)
         out = {}  # Structure -> {'to': ('flag', 'captured=n|c|b|e|p|k|q')}
 
+        def common(func):
+            """
+            Common method for 'rook', 'bishop' and 'queen' pieces' core algorithm hence
+            there are no restriction to their movement across the board despite the squares
+            of each pieces.
+
+            :param func: to be invoked for each of the piece with the parameters defined
+                         below in this very same method.
+            :return: the `out` dictionary from parent method of this method.
+            """
+
+            def pick(i, j):
+                _to = self.square((i, j))
+
+                if not _to.piece:
+                    out[_to.location] = (FLAGS.NORMAL,)
+                    return False
+                elif _to.piece and color != _to.color:
+                    out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+                    return True
+                elif _to.piece and color == _to.color:
+                    return True
+
+            position, _max = [], max(np.concatenate([[8, 8] - np.array(loc), np.array(loc)]))
+            return func(pick, position, _max)
+
         def pawn():
             min_r, max_r = (loc[0] - 1 if loc[0] > 0 else 0, loc[0] + 1 if loc[0] < 7 else 7)
             min_c, max_c = (loc[1] - 1 if loc[1] > 0 else 0, loc[1] + 1 if loc[1] < 7 else 7)
@@ -297,36 +323,6 @@ class Board(object):
                         out[_to.location] = (FLAGS.BIG_PAWN,)
             return out
 
-        def rook():
-            def pick(i, j):
-                _to = self.square((i, j))
-
-                if not _to.piece:
-                    out[_to.location] = (FLAGS.NORMAL,)
-                    return False
-                elif _to.piece and color != _to.color:
-                    out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
-                    return True
-                elif _to.piece and color == _to.color:
-                    return True
-
-            pos, max_idx = [], max(np.concatenate([[8, 8] - np.array(loc), np.array(loc)]))
-
-            for x in range(max_idx):
-                if 0 <= loc[0] + x + 1 < 8 and 'd' not in pos \
-                        and pick(loc[0] + x + 1, loc[1]):
-                    pos.append('d')
-                if 0 <= loc[0] - x - 1 < 8 and 'u' not in pos \
-                        and pick(loc[0] - x - 1, loc[1]):
-                    pos.append('u')
-                if 0 <= loc[1] + x + 1 < 8 and 'r' not in pos \
-                        and pick(loc[0], loc[1] + x + 1):
-                    pos.append('r')
-                if 0 <= loc[1] - x - 1 < 8 and 'l' not in pos \
-                        and pick(loc[0], loc[1] - x - 1):
-                    pos.append('l')
-            return out
-
         def knight():
             def pick(_to):
                 if not _to.piece:
@@ -343,22 +339,58 @@ class Board(object):
                         pick(self.square((loc[0] + j, loc[1] + i)))
             return out
 
-        def bishop():  # NOSONAR
-            pass
+        def rook(pick, pos, _max):
+            for x in range(_max):
+                if 0 <= loc[0] + x + 1 < 8 and 'd' not in pos \
+                        and pick(loc[0] + x + 1, loc[1]):
+                    pos.append('d')
+                if 0 <= loc[0] - x - 1 < 8 and 'u' not in pos \
+                        and pick(loc[0] - x - 1, loc[1]):
+                    pos.append('u')
+                if 0 <= loc[1] + x + 1 < 8 and 'r' not in pos \
+                        and pick(loc[0], loc[1] + x + 1):
+                    pos.append('r')
+                if 0 <= loc[1] - x - 1 < 8 and 'l' not in pos \
+                        and pick(loc[0], loc[1] - x - 1):
+                    pos.append('l')
+            return out
 
-        def queen():  # NOSONAR
-            pass
+        def bishop(pick, pos, _max):
+            for x, y in zip(range(_max), range(_max)):
+                if (0 <= loc[0] + x + 1 < 8 and 0 <= loc[1] + y + 1 < 8) \
+                        and 'dr' not in pos and pick(loc[0] + x + 1, loc[1] + y + 1):
+                    pos.append('dr')
+                if (0 <= loc[0] - x - 1 < 8 and 0 <= loc[1] + y + 1 < 8) \
+                        and 'ur' not in pos and pick(loc[0] - x - 1, loc[1] + y + 1):
+                    pos.append('ur')
+                if (0 <= loc[0] + x + 1 < 8 and 0 <= loc[1] - y - 1 < 8) \
+                        and 'dl' not in pos and pick(loc[0] + x + 1, loc[1] - y - 1):
+                    pos.append('dl')
+                if (0 <= loc[0] - x - 1 < 8 and 0 <= loc[1] - y - 1 < 8) \
+                        and 'ul' not in pos and pick(loc[0] - x - 1, loc[1] - y - 1):
+                    pos.append('ul')
+            return out
+
+        def queen(pick, pos, _max):
+            rook(pick, pos, _max)
+            bishop(pick, pos, _max)
+            return out
 
         def king():  # NOSONAR
             pass
 
         switch = {
             PIECES.PAWN: pawn,
-            PIECES.ROOK: rook,
             PIECES.KNIGHT: knight,
+            PIECES.ROOK: rook,
             PIECES.BISHOP: bishop,
             PIECES.QUEEN: queen,
             PIECES.KING: king
         }
 
-        return switch.get(PIECES[piece - 1], None)()
+        if PIECES[piece - 1] == PIECES.ROOK \
+                or PIECES[piece - 1] == PIECES.BISHOP \
+                or PIECES[piece - 1] == PIECES.QUEEN:
+            return common(switch.get(PIECES[piece - 1]))
+        else:
+            return switch.get(PIECES[piece - 1], None)()
