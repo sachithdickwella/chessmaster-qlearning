@@ -325,7 +325,6 @@ class Board(object):
                 if 0 <= loc[1] - x - 1 < 8 and 'l' not in pos \
                         and pick(loc[0], loc[1] - x - 1):
                     pos.append('l')
-
             return out
 
         def knight():
