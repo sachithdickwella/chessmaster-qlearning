@@ -356,9 +356,22 @@ class Board(object):
             return out
 
         def bishop(pick, pos, _max):
-            pass
+            for x, y in zip(range(_max), range(_max)):
+                if (0 <= loc[0] + x + 1 < 8 and 0 <= loc[1] + y + 1 < 8) \
+                        and 'dr' not in pos and pick(loc[0] + x + 1, loc[1] + y + 1):
+                    pos.append('dr')
+                if (0 <= loc[0] - x - 1 < 8 and 0 <= loc[1] + y + 1 < 8) \
+                        and 'ur' not in pos and pick(loc[0] - x - 1, loc[1] + y + 1):
+                    pos.append('ur')
+                if (0 <= loc[0] + x + 1 < 8 and 0 <= loc[1] - y - 1 < 8) \
+                        and 'dl' not in pos and pick(loc[0] + x + 1, loc[1] - y - 1):
+                    pos.append('dl')
+                if (0 <= loc[0] - x - 1 < 8 and 0 <= loc[1] - y - 1 < 8) \
+                        and 'ul' not in pos and pick(loc[0] - x - 1, loc[1] - y - 1):
+                    pos.append('ul')
+            return out
 
-        def queen(pick):  # NOSONAR
+        def queen(pick, pos, _max):  # NOSONAR
             pass
 
         def king():  # NOSONAR
