@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 from collections import namedtuple
 
 import numpy as np
+
+from . import EMPTY
 
 # Players of the game.
 PLAYERS = namedtuple('Players', ('WHITE', 'BLACK'))(*'wb')
@@ -216,6 +218,21 @@ class Board(object):
         :return: an instance of :class:`Move` class with the details of source, target,
         color, flag, target SAN and piece if it's legal move. Otherwise 'None' returns.
         """
+
+        def delimiter(flag):
+            """
+            Get the delimiter value to append with standard algebraic notation.
+
+            :param flag: value to determine the delimiter value for SAN.
+            :return: the determined delimiter value to append.
+            """
+            if flag == FLAGS.CAPTURE:
+                return 'x'
+            elif flag == FLAGS.EP_CAPTURE:
+                return 'e.p'
+            else:
+                return EMPTY
+
         if type(move) is not str:
             raise TypeError('Item index should be Algebraic Notation')
         elif not re.match('^([a-hA-H][1-8]-?)+$', move):
@@ -240,12 +257,16 @@ class Board(object):
                 piece = PIECES[piece - 1]
                 p_color = PLAYERS[p_color - 1]
 
-                return Move(p_color, _from, _to, piece, f'{piece}{_to}', *moves[_to])
+                moves = moves[_to]
+                return Move(p_color, _from, _to, piece, f'{piece.upper()}{delimiter(moves[0])}{_to}', *moves)
             else:
                 return None
 
     def generate_moves(self, _from):  # NOSONAR
         piece, color, loc = self.square(_from)
+        if not piece:
+            return None
+
         out = {}  # Structure -> {'to': ('flag', 'captured=n|c|b|e|p|k|q')}
 
         def common(func):
@@ -274,9 +295,19 @@ class Board(object):
             position, _max = [], max(np.concatenate([[8, 8] - np.array(loc), np.array(loc)]))
             return func(pick, position, _max)
 
-        def pawn():
+        def margins():
+            """
+            Common method to extract the margin of the PAWN and KING square movements hence
+            they can be moved around the 8 squares around them basically.
+
+            :return: the value of :attr:`min_r`, :attr:`max_r`, :attr:`min_c` and :attr:`max_c`.
+            """
             min_r, max_r = (loc[0] - 1 if loc[0] > 0 else 0, loc[0] + 1 if loc[0] < 7 else 7)
             min_c, max_c = (loc[1] - 1 if loc[1] > 0 else 0, loc[1] + 1 if loc[1] < 7 else 7)
+            return min_r, max_r, min_c, max_c
+
+        def pawn():
+            min_r, max_r, min_c, max_c = margins()
 
             for i in range(min_r, max_r + 1):
                 for j in range(min_c, max_c + 1):
@@ -376,8 +407,18 @@ class Board(object):
             bishop(pick, pos, _max)
             return out
 
-        def king():  # NOSONAR
-            pass
+        def king():
+            min_r, max_r, min_c, max_c = margins()
+
+            for i in range(min_r, max_r + 1):
+                for j in range(min_c, max_c + 1):
+                    if loc != (i, j):
+                        _to = self.square((i, j))
+                        if not _to.piece:
+                            out[_to.location] = (FLAGS.NORMAL,)
+                        if _to.piece and color != _to.color:
+                            out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+            return out
 
         switch = {
             PIECES.PAWN: pawn,
@@ -388,9 +429,10 @@ class Board(object):
             PIECES.KING: king
         }
 
-        if PIECES[piece - 1] == PIECES.ROOK \
-                or PIECES[piece - 1] == PIECES.BISHOP \
-                or PIECES[piece - 1] == PIECES.QUEEN:
-            return common(switch.get(PIECES[piece - 1]))
+        piece -= 1
+        if PIECES[piece] == PIECES.ROOK \
+                or PIECES[piece] == PIECES.BISHOP \
+                or PIECES[piece] == PIECES.QUEEN:
+            return common(switch.get(PIECES[piece]))
         else:
-            return switch.get(PIECES[piece - 1], None)()
+            return switch.get(PIECES[piece], None)()

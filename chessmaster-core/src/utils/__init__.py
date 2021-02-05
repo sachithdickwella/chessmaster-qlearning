@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import logging.config
 import sys
@@ -10,6 +10,7 @@ IMAGE_PATH = f'{BUILD_PATH}/out'
 LOG_PATH = f'{BUILD_PATH}/log'
 LOG_FILENAME = 'chessmaster-process.log'
 TEMP_PATH = f'{BUILD_PATH}/tmp'
+EMPTY = ''
 
 IMAGE_SIZE = (512, 512)
 
