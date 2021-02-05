@@ -19,8 +19,6 @@ from collections import namedtuple
 
 import numpy as np
 
-from . import EMPTY
-
 # Players of the game.
 PLAYERS = namedtuple('Players', ('WHITE', 'BLACK'))(*'wb')
 PLAYERS_BITS = namedtuple('PlayersBits', ('WHITE', 'BLACK'))(1, 2)
@@ -208,7 +206,7 @@ class Board(object):
         """
         self._turn = PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
-    def move(self, move):
+    def move(self, move):   # NOSONAR
         """
         Get the move details by passing the algebraic notation of the move and return
         'None' if the move is an illegal.
@@ -219,19 +217,13 @@ class Board(object):
         color, flag, target SAN and piece if it's legal move. Otherwise 'None' returns.
         """
 
-        def delimiter(flag):
-            """
-            Get the delimiter value to append with standard algebraic notation.
-
-            :param flag: value to determine the delimiter value for SAN.
-            :return: the determined delimiter value to append.
-            """
-            if flag == FLAGS.CAPTURE:
-                return 'x'
-            elif flag == FLAGS.EP_CAPTURE:
-                return 'e.p'
+        def notation(_piece, _to, _flag):
+            if _flag == FLAGS.CAPTURE:
+                return _piece + 'x' + _to
+            elif _flag == FLAGS.EP_CAPTURE:
+                return _piece + 'x' + _to + 'e.p'
             else:
-                return EMPTY
+                return _piece + _to
 
         if type(move) is not str:
             raise TypeError('Item index should be Algebraic Notation')
@@ -258,7 +250,7 @@ class Board(object):
                 p_color = PLAYERS[p_color - 1]
 
                 moves = moves[_to]
-                return Move(p_color, _from, _to, piece, f'{piece.upper()}{delimiter(moves[0])}{_to}', *moves)
+                return Move(p_color, _from, _to, piece, notation(piece, _to, moves[0]), *moves)
             else:
                 return None
 
@@ -419,6 +411,18 @@ class Board(object):
                         if _to.piece and color != _to.color:
                             out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
             return out
+
+        def promotion():  # NOSONAR
+            pass
+
+        def castling():  # NOSONAR
+            pass
+
+        def check():  # NOSONAR
+            pass
+
+        def checkmate():  # NOSONAR
+            pass
 
         switch = {
             PIECES.PAWN: pawn,
