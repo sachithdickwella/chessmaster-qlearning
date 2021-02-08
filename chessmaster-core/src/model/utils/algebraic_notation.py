@@ -114,6 +114,12 @@ class Move(object):
         return details
 
 
+class M(object):
+
+    def __init__(self):
+        super(M, self).__init__()
+
+
 class Board(object):
 
     def __init__(self):
@@ -233,10 +239,16 @@ class Board(object):
         """
 
         def notation(_piece, _to, _flag):
+            _piece = _piece.upper()
+
             if _flag == FLAGS.CAPTURE:
                 return _piece + 'x' + _to
             elif _flag == FLAGS.EP_CAPTURE:
                 return _piece + 'x' + _to + 'e.p'
+            elif _flag == FLAGS.PROMOTION:
+                return _to + '=' + promotion.upper()
+            elif _flag == FLAGS.CAPTURE + FLAGS.PROMOTION:
+                return _piece + 'x' + _to + '=' + promotion.upper()
             else:
                 return _piece + _to
 
