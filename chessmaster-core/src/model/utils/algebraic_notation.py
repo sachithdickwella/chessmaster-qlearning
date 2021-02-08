@@ -19,6 +19,8 @@ from collections import namedtuple
 
 import numpy as np
 
+from utils.commons import PromotionInvalidException
+
 # Players of the game.
 PLAYERS = namedtuple('Players', ('WHITE', 'BLACK'))(*'wb')
 PLAYERS_BITS = namedtuple('PlayersBits', ('WHITE', 'BLACK'))(1, 2)
@@ -32,6 +34,7 @@ FLAGS = namedtuple('Flags', ('NORMAL',
                              'QUEEN_SIDE_CASTLE'))(*'ncbepkq')
 # Chess pieces of the board.
 PIECES = namedtuple('Pieces', ('PAWN', 'KNIGHT', 'BISHOP', 'ROOK', 'QUEEN', 'KING'))(*'pnbrqk')
+PROMOTABLE = 'nbrq'
 
 
 class Move(object):
@@ -154,7 +157,7 @@ class Board(object):
 
         return board, _board
 
-    def update_board(self, _from, _to, flag):
+    def update_board(self, _from, _to, flag, promotion):
         f_piece, _, f_loc = self.square(_from)
         _, _, t_loc = self.square(_to)
 
@@ -164,6 +167,13 @@ class Board(object):
             if flag == FLAGS.EP_CAPTURE:
                 idx = 1 if self._turn == PLAYERS_BITS.WHITE else -1
                 self._board[t_loc[0] + idx, t_loc[1]] = self.c_board[t_loc[0] + idx, t_loc[1]] = 0
+            elif flag == FLAGS.PROMOTION or flag == FLAGS.CAPTURE + FLAGS.PROMOTION:
+                if not promotion:
+                    raise PromotionInvalidException(f'Promotion value is not provided: \'{promotion}\'')
+                elif promotion not in PROMOTABLE:
+                    raise PromotionInvalidException(f'Provided promotion value is not valid: \'{promotion}\'')
+                else:
+                    self._board[f_loc] = self.pieces[promotion]
 
         self._board[t_loc] = self._board[f_loc]
         self.c_board[t_loc] = self.c_board[f_loc]
@@ -210,13 +220,14 @@ class Board(object):
         """
         self._turn = PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
-    def move(self, move):  # NOSONAR
+    def move(self, move, promotion=None):  # NOSONAR
         """
         Get the move details by passing the algebraic notation of the move and return
         'None' if the move is an illegal.
 
         :param move: algebraic notation of 2 squares that the piece should moved from
         and the destination (ex: b2-b4).
+        :param promotion: pawn promoted piece value on pawn promotions.
         :return: an instance of :class:`Move` class with the details of source, target,
         color, flag, target SAN and piece if it's legal move. Otherwise 'None' returns.
         """
@@ -247,14 +258,14 @@ class Board(object):
             print(moves)
 
             if _to in moves:
-                self.update_board(_from, _to, moves[_to][0])
+                self.update_board(_from, _to, moves[_to][0], promotion)
                 self.toggle_player()
 
                 piece = PIECES[piece - 1]
                 p_color = PLAYERS[p_color - 1]
 
                 moves = moves[_to]
-                return Move(p_color, _from, _to, piece, notation(piece, _to, moves[0]), *moves)
+                return Move(p_color, _from, _to, piece, notation(piece, _to, moves[0]), *moves, promotion)
             else:
                 return None
 
@@ -329,12 +340,18 @@ class Board(object):
                                 and ((i > loc[0] and color == PLAYERS_BITS.BLACK)
                                      or (i < loc[0] and color == PLAYERS_BITS.WHITE)) \
                                 and (j == loc[1] + 1 or j == loc[1] - 1):
-                            out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+                            if (color == PLAYERS_BITS.BLACK and i == 7) or (color == PLAYERS_BITS.WHITE and i == 0):
+                                out[_to.location] = (FLAGS.CAPTURE + FLAGS.PROMOTION, PIECES[_to.piece - 1])
+                            else:
+                                out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
 
                         elif not _to.piece and j == loc[1] \
                                 and ((i == loc[0] + 1 and color == PLAYERS_BITS.BLACK)
                                      or (i == loc[0] - 1 and color == PLAYERS_BITS.WHITE)):
-                            out[_to.location] = (FLAGS.NORMAL,)
+                            if (color == PLAYERS_BITS.BLACK and i == 7) or (color == PLAYERS_BITS.WHITE and i == 0):
+                                out[_to.location] = (FLAGS.PROMOTION,)
+                            else:
+                                out[_to.location] = (FLAGS.NORMAL,)
 
                         elif not _to.piece and j != loc[1] \
                                 and ((color == PLAYERS_BITS.BLACK and loc[0] == 4 and i == loc[0] + 1)
