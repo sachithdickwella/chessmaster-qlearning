@@ -114,6 +114,12 @@ class Move(object):
         return details
 
 
+class M(object):
+
+    def __init__(self):
+        super(M, self).__init__()
+
+
 class Board(object):
 
     def __init__(self):
@@ -218,7 +224,7 @@ class Board(object):
         """
         Toggle the attribute::self._turn value depending on the current value. Nothing returns.
         """
-        self._turn = PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
+        return PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
     def move(self, move, promotion=None):  # NOSONAR
         """
@@ -233,10 +239,16 @@ class Board(object):
         """
 
         def notation(_piece, _to, _flag):
+            _piece = _piece.upper()
+
             if _flag == FLAGS.CAPTURE:
                 return _piece + 'x' + _to
             elif _flag == FLAGS.EP_CAPTURE:
                 return _piece + 'x' + _to + 'e.p'
+            elif _flag == FLAGS.PROMOTION:
+                return _to + '=' + promotion.upper()
+            elif _flag == FLAGS.CAPTURE + FLAGS.PROMOTION:
+                return _piece + 'x' + _to + '=' + promotion.upper()
             else:
                 return _piece + _to
 
@@ -259,7 +271,7 @@ class Board(object):
 
             if _to in moves:
                 self.update_board(_from, _to, moves[_to][0], promotion)
-                self.toggle_player()
+                self._turn = self.toggle_player()
 
                 piece = PIECES[piece - 1]
                 p_color = PLAYERS[p_color - 1]
@@ -435,15 +447,6 @@ class Board(object):
                             out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
             return out
 
-        def castling():  # NOSONAR
-            pass
-
-        def check():  # NOSONAR
-            pass
-
-        def checkmate():  # NOSONAR
-            pass
-
         switch = {
             PIECES.PAWN: pawn,
             PIECES.KNIGHT: knight,
@@ -460,3 +463,17 @@ class Board(object):
             return common(switch.get(PIECES[piece]))
         else:
             return switch.get(PIECES[piece], None)()
+
+    def castling(self):  # NOSONAR
+        pass
+
+    def check(self):  # NOSONAR
+        rows, cols = np.where(self.c_board == self.toggle_player())
+        for _r, _c in zip(rows, cols):
+            _, _, loc = self.square((_r, _c))
+            moves = self.generate_moves(loc)
+
+            print(moves)  # TODO
+
+    def checkmate(self):  # NOSONAR
+        pass
