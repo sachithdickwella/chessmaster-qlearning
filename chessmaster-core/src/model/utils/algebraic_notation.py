@@ -19,6 +19,8 @@ from collections import namedtuple
 
 import numpy as np
 
+from utils.commons import PromotionInvalidException
+
 # Players of the game.
 PLAYERS = namedtuple('Players', ('WHITE', 'BLACK'))(*'wb')
 PLAYERS_BITS = namedtuple('PlayersBits', ('WHITE', 'BLACK'))(1, 2)
@@ -32,6 +34,7 @@ FLAGS = namedtuple('Flags', ('NORMAL',
                              'QUEEN_SIDE_CASTLE'))(*'ncbepkq')
 # Chess pieces of the board.
 PIECES = namedtuple('Pieces', ('PAWN', 'KNIGHT', 'BISHOP', 'ROOK', 'QUEEN', 'KING'))(*'pnbrqk')
+PROMOTABLE = 'nbrq'
 
 
 class Move(object):
@@ -55,7 +58,7 @@ class Move(object):
     player despite the color.
     """
 
-    def __init__(self, color, _from, _to, piece, san, flag, captured=None):
+    def __init__(self, color, _from, _to, piece, san, flag, captured=None, promotion=None):
         """
         Initialize :class:`Move` instances with the default member values generated from the
         movement by :class:`Board`.
@@ -67,6 +70,7 @@ class Move(object):
         :param san: standard algebraic notation for the moves.
         :param flag: if something significant happens during this movement.
         :param captured: flag if the movement captured a opponent's piece and that piece's name.
+        :param promotion: flag if the pawn movement is a promotion and to what it is promoted to.
         """
         super(Move, self).__init__()
 
@@ -77,6 +81,7 @@ class Move(object):
         self.piece = piece
         self.san = san
         self.captured = captured
+        self.promotion = promotion
 
     def __str__(self):
         """
@@ -104,6 +109,8 @@ class Move(object):
 
         if self.captured is not None:
             details['captured'] = self.captured
+        if self.promotion is not None:
+            details['promotion'] = self.promotion
         return details
 
 
@@ -150,7 +157,7 @@ class Board(object):
 
         return board, _board
 
-    def update_board(self, _from, _to, flag):
+    def update_board(self, _from, _to, flag, promotion):
         f_piece, _, f_loc = self.square(_from)
         _, _, t_loc = self.square(_to)
 
@@ -160,6 +167,13 @@ class Board(object):
             if flag == FLAGS.EP_CAPTURE:
                 idx = 1 if self._turn == PLAYERS_BITS.WHITE else -1
                 self._board[t_loc[0] + idx, t_loc[1]] = self.c_board[t_loc[0] + idx, t_loc[1]] = 0
+            elif flag == FLAGS.PROMOTION or flag == FLAGS.CAPTURE + FLAGS.PROMOTION:
+                if not promotion:
+                    raise PromotionInvalidException(f'Promotion value is not provided: \'{promotion}\'')
+                elif promotion not in PROMOTABLE:
+                    raise PromotionInvalidException(f'Provided promotion value is not valid: \'{promotion}\'')
+                else:
+                    self._board[f_loc] = self.pieces[promotion]
 
         self._board[t_loc] = self._board[f_loc]
         self.c_board[t_loc] = self.c_board[f_loc]
@@ -206,13 +220,14 @@ class Board(object):
         """
         self._turn = PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
-    def move(self, move):   # NOSONAR
+    def move(self, move, promotion=None):  # NOSONAR
         """
         Get the move details by passing the algebraic notation of the move and return
         'None' if the move is an illegal.
 
         :param move: algebraic notation of 2 squares that the piece should moved from
         and the destination (ex: b2-b4).
+        :param promotion: pawn promoted piece value on pawn promotions.
         :return: an instance of :class:`Move` class with the details of source, target,
         color, flag, target SAN and piece if it's legal move. Otherwise 'None' returns.
         """
@@ -243,14 +258,14 @@ class Board(object):
             print(moves)
 
             if _to in moves:
-                self.update_board(_from, _to, moves[_to][0])
+                self.update_board(_from, _to, moves[_to][0], promotion)
                 self.toggle_player()
 
                 piece = PIECES[piece - 1]
                 p_color = PLAYERS[p_color - 1]
 
                 moves = moves[_to]
-                return Move(p_color, _from, _to, piece, notation(piece, _to, moves[0]), *moves)
+                return Move(p_color, _from, _to, piece, notation(piece, _to, moves[0]), *moves, promotion)
             else:
                 return None
 
@@ -261,13 +276,13 @@ class Board(object):
 
         out = {}  # Structure -> {'to': ('flag', 'captured=n|c|b|e|p|k|q')}
 
-        def common(func):
+        def common(fun):
             """
             Common method for 'rook', 'bishop' and 'queen' pieces' core algorithm hence
             there are no restriction to their movement across the board despite the squares
             of each pieces.
 
-            :param func: to be invoked for each of the piece with the parameters defined
+            :param fun: to be invoked for each of the piece with the parameters defined
                          below in this very same method.
             :return: the `out` dictionary from parent method of this method.
             """
@@ -285,7 +300,7 @@ class Board(object):
                     return True
 
             position, _max = [], max(np.concatenate([[8, 8] - np.array(loc), np.array(loc)]))
-            return func(pick, position, _max)
+            return fun(pick, position, _max)
 
         def margins():
             """
@@ -301,6 +316,22 @@ class Board(object):
         def pawn():
             min_r, max_r, min_c, max_c = margins()
 
+            def big_pawn():
+                for rank in range(2):
+                    if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
+                        __to = self.square((loc[0] + rank + 1, loc[1]))
+                        if not rank and __to.piece:
+                            break
+                        elif rank and not __to.piece and _from not in self.pawns_history:
+                            out[__to.location] = (FLAGS.BIG_PAWN,)
+
+                    elif self._turn == color and color == PLAYERS_BITS.WHITE and loc[0] == 6:
+                        __to = self.square((loc[0] - rank - 1, loc[1]))
+                        if not rank and __to.piece:
+                            break
+                        elif rank and not __to.piece and _from not in self.pawns_history:
+                            out[__to.location] = (FLAGS.BIG_PAWN,)
+
             for i in range(min_r, max_r + 1):
                 for j in range(min_c, max_c + 1):
                     if loc != (i, j):
@@ -309,12 +340,18 @@ class Board(object):
                                 and ((i > loc[0] and color == PLAYERS_BITS.BLACK)
                                      or (i < loc[0] and color == PLAYERS_BITS.WHITE)) \
                                 and (j == loc[1] + 1 or j == loc[1] - 1):
-                            out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+                            if (color == PLAYERS_BITS.BLACK and i == 7) or (color == PLAYERS_BITS.WHITE and i == 0):
+                                out[_to.location] = (FLAGS.CAPTURE + FLAGS.PROMOTION, PIECES[_to.piece - 1])
+                            else:
+                                out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
 
                         elif not _to.piece and j == loc[1] \
                                 and ((i == loc[0] + 1 and color == PLAYERS_BITS.BLACK)
                                      or (i == loc[0] - 1 and color == PLAYERS_BITS.WHITE)):
-                            out[_to.location] = (FLAGS.NORMAL,)
+                            if (color == PLAYERS_BITS.BLACK and i == 7) or (color == PLAYERS_BITS.WHITE and i == 0):
+                                out[_to.location] = (FLAGS.PROMOTION,)
+                            else:
+                                out[_to.location] = (FLAGS.NORMAL,)
 
                         elif not _to.piece and j != loc[1] \
                                 and ((color == PLAYERS_BITS.BLACK and loc[0] == 4 and i == loc[0] + 1)
@@ -329,21 +366,7 @@ class Board(object):
                                     and len(self.pawns_history) == [lo for lo, _ in self.pawns_history.values()] \
                                     .index(enp.location) + 1:
                                 out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[enp.piece - 1])
-
-            for rank in range(2):
-                if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
-                    _to = self.square((loc[0] + rank + 1, loc[1]))
-                    if not rank and _to.piece:
-                        break
-                    elif rank and not _to.piece and _from not in self.pawns_history:
-                        out[_to.location] = (FLAGS.BIG_PAWN,)
-
-                elif self._turn == color and color == PLAYERS_BITS.WHITE and loc[0] == 6:
-                    _to = self.square((loc[0] - rank - 1, loc[1]))
-                    if not rank and _to.piece:
-                        break
-                    elif rank and not _to.piece and _from not in self.pawns_history:
-                        out[_to.location] = (FLAGS.BIG_PAWN,)
+            big_pawn()
             return out
 
         def knight():
@@ -411,9 +434,6 @@ class Board(object):
                         if _to.piece and color != _to.color:
                             out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
             return out
-
-        def promotion():  # NOSONAR
-            pass
 
         def castling():  # NOSONAR
             pass
