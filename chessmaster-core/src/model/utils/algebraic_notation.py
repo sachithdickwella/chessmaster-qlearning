@@ -14,6 +14,7 @@
 #
 # -*- coding: utf-8 -*-
 
+import copy as cp
 import re
 from collections import namedtuple
 
@@ -133,7 +134,7 @@ class Board(object):
         self._board, self.c_board = self.setup_board()
 
         self._turn = PLAYERS_BITS.WHITE
-        self.is_checked = False
+        self.checks = []
 
     def __str__(self):
         return "Pieces Location:\n" \
@@ -227,7 +228,7 @@ class Board(object):
         """
         return PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
-    def move(self, move, promotion=None):  # NOSONAR
+    def move(self, move, promotion=None, turn=None):  # NOSONAR
         """
         Get the move details by passing the algebraic notation of the move and return
         'None' if the move is an illegal.
@@ -235,6 +236,7 @@ class Board(object):
         :param move: algebraic notation of 2 squares that the piece should moved from
         and the destination (ex: b2-b4).
         :param promotion: pawn promoted piece value on pawn promotions.
+        :param turn: mark the status of which players turn is it.
         :return: an instance of :class:`Move` class with the details of source, target,
         color, flag, target SAN and piece if it's legal move. Otherwise 'None' returns.
         """
@@ -268,13 +270,12 @@ class Board(object):
                 return None
 
             moves = self.generate_moves(_from)
-            print(moves)
 
             if _to in moves:
                 self.update_board(_from, _to, moves[_to][0], promotion)
 
                 self._turn = self.toggle_player()
-                self.is_checked = bool(self.has_check())
+                self.checks = self.has_check(turn)
 
                 piece = PIECES[piece - 1]
                 p_color = PLAYERS[p_color - 1]
@@ -471,18 +472,37 @@ class Board(object):
     def castling(self):  # NOSONAR
         pass
 
-    def has_check(self):
-        rows, cols = np.where(self.c_board == self.toggle_player())
+    def has_check(self, _turn=None):
+        rows, cols = np.where(self.c_board == [_turn if _turn else self.toggle_player()])
         checks = []
 
         for _r, _c in zip(rows, cols):
-            piece, color, loc = self.square((_r, _c))
+            _, _, loc = self.square((_r, _c))
             moves = self.generate_moves(loc)
 
             for value in moves.values():
                 if len(value) > 1 and value[1] == PIECES.KING:
-                    checks.append((piece, color, loc))
+                    checks.append((loc, moves))
         return checks
+
+    def counter_moves(self):  # NOSONAR
+        rows, cols = np.where(self.c_board == self._turn)
+        counter_moves = []
+
+        for _r, _c in zip(rows, cols):
+            piece, _, loc = self.square((_r, _c))
+            moves = self.generate_moves(loc)
+
+            for key in moves.keys():
+                for checks in self.checks:
+                    if key == checks[0] or key in checks[1] or PIECES[piece - 1] == PIECES.KING:
+                        board = cp.deepcopy(self)
+                        board.move(f'{loc}-{key}', turn=board.toggle_player())
+
+                        if not board.checks:
+                            # TODO - Revamp the output to comply with common outputs.
+                            counter_moves.append({PIECES[piece - 1]: key})
+        return counter_moves
 
     def checkmate(self):  # NOSONAR
         pass
