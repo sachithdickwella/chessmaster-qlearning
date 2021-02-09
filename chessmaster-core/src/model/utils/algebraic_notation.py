@@ -133,6 +133,7 @@ class Board(object):
         self._board, self.c_board = self.setup_board()
 
         self._turn = PLAYERS_BITS.WHITE
+        self.is_checked = False
 
     def __str__(self):
         return "Pieces Location:\n" \
@@ -271,7 +272,9 @@ class Board(object):
 
             if _to in moves:
                 self.update_board(_from, _to, moves[_to][0], promotion)
+
                 self._turn = self.toggle_player()
+                self.is_checked = bool(self.has_check())
 
                 piece = PIECES[piece - 1]
                 p_color = PLAYERS[p_color - 1]
@@ -330,19 +333,20 @@ class Board(object):
 
             def big_pawn():
                 for rank in range(2):
-                    if self._turn == color and color == PLAYERS_BITS.BLACK and loc[0] == 1:
-                        __to = self.square((loc[0] + rank + 1, loc[1]))
-                        if not rank and __to.piece:
+                    if color == PLAYERS_BITS.BLACK and loc[0] == 1:
+                        nonlocal _to
+                        _to = self.square((loc[0] + rank + 1, loc[1]))
+                        if not rank and _to.piece:
                             break
-                        elif rank and not __to.piece and _from not in self.pawns_history:
-                            out[__to.location] = (FLAGS.BIG_PAWN,)
+                        elif rank and not _to.piece and _from not in self.pawns_history:
+                            out[_to.location] = (FLAGS.BIG_PAWN,)
 
-                    elif self._turn == color and color == PLAYERS_BITS.WHITE and loc[0] == 6:
-                        __to = self.square((loc[0] - rank - 1, loc[1]))
-                        if not rank and __to.piece:
+                    elif color == PLAYERS_BITS.WHITE and loc[0] == 6:
+                        _to = self.square((loc[0] - rank - 1, loc[1]))
+                        if not rank and _to.piece:
                             break
-                        elif rank and not __to.piece and _from not in self.pawns_history:
-                            out[__to.location] = (FLAGS.BIG_PAWN,)
+                        elif rank and not _to.piece and _from not in self.pawns_history:
+                            out[_to.location] = (FLAGS.BIG_PAWN,)
 
             for i in range(min_r, max_r + 1):
                 for j in range(min_c, max_c + 1):
@@ -467,13 +471,18 @@ class Board(object):
     def castling(self):  # NOSONAR
         pass
 
-    def check(self):  # NOSONAR
+    def has_check(self):
         rows, cols = np.where(self.c_board == self.toggle_player())
+        checks = []
+
         for _r, _c in zip(rows, cols):
-            _, _, loc = self.square((_r, _c))
+            piece, color, loc = self.square((_r, _c))
             moves = self.generate_moves(loc)
 
-            print(moves)  # TODO
+            for value in moves.values():
+                if len(value) > 1 and value[1] == PIECES.KING:
+                    checks.append((piece, color, loc))
+        return checks
 
     def checkmate(self):  # NOSONAR
         pass
