@@ -228,7 +228,7 @@ class Board(object):
         """
         return PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
-    def move(self, move, promotion=None, turn=None):  # NOSONAR
+    def move(self, move, promotion=None, turn=None, explicit=False):  # NOSONAR
         """
         Get the move details by passing the algebraic notation of the move and return
         'None' if the move is an illegal.
@@ -236,7 +236,9 @@ class Board(object):
         :param move: algebraic notation of 2 squares that the piece should moved from
         and the destination (ex: b2-b4).
         :param promotion: pawn promoted piece value on pawn promotions.
-        :param turn: mark the status of which players turn is it.
+        :param turn: mark the status of which player's turn is it.
+        :param explicit: mark if the move is explicit or not. Explicit move is sample move
+                         despite the current board status.
         :return: an instance of :class:`Move` class with the details of source, target,
         color, flag, target SAN and piece if it's legal move. Otherwise 'None' returns.
         """
@@ -269,7 +271,7 @@ class Board(object):
                     or (d_piece and self._turn == dp_color):
                 return None
 
-            moves = self.generate_moves(_from)
+            moves = self.generate_moves(_from, explicit=explicit)
 
             if _to in moves:
                 self.update_board(_from, _to, moves[_to][0], promotion)
@@ -285,7 +287,7 @@ class Board(object):
             else:
                 return None
 
-    def generate_moves(self, _from):  # NOSONAR
+    def generate_moves(self, _from, explicit=False):  # NOSONAR
         piece, color, loc = self.square(_from)
         if not piece:
             return None
@@ -329,128 +331,159 @@ class Board(object):
             min_c, max_c = (loc[1] - 1 if loc[1] > 0 else 0, loc[1] + 1 if loc[1] < 7 else 7)
             return min_r, max_r, min_c, max_c
 
-        def pawn():
-            min_r, max_r, min_c, max_c = margins()
+        def checked_moves(_p):
+            """
 
-            def big_pawn():
-                for rank in range(2):
-                    if color == PLAYERS_BITS.BLACK and loc[0] == 1:
-                        nonlocal _to
-                        _to = self.square((loc[0] + rank + 1, loc[1]))
-                        if not rank and _to.piece:
-                            break
-                        elif rank and not _to.piece and _from not in self.pawns_history:
-                            out[_to.location] = (FLAGS.BIG_PAWN,)
-
-                    elif color == PLAYERS_BITS.WHITE and loc[0] == 6:
-                        _to = self.square((loc[0] - rank - 1, loc[1]))
-                        if not rank and _to.piece:
-                            break
-                        elif rank and not _to.piece and _from not in self.pawns_history:
-                            out[_to.location] = (FLAGS.BIG_PAWN,)
-
-            for i in range(min_r, max_r + 1):
-                for j in range(min_c, max_c + 1):
-                    if loc != (i, j):
-                        _to = self.square((i, j))
-                        if _to.piece and _to.color != color \
-                                and ((i > loc[0] and color == PLAYERS_BITS.BLACK)
-                                     or (i < loc[0] and color == PLAYERS_BITS.WHITE)) \
-                                and (j == loc[1] + 1 or j == loc[1] - 1):
-                            if (color == PLAYERS_BITS.BLACK and i == 7) or (color == PLAYERS_BITS.WHITE and i == 0):
-                                out[_to.location] = (FLAGS.CAPTURE + FLAGS.PROMOTION, PIECES[_to.piece - 1])
-                            else:
-                                out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
-
-                        elif not _to.piece and j == loc[1] \
-                                and ((i == loc[0] + 1 and color == PLAYERS_BITS.BLACK)
-                                     or (i == loc[0] - 1 and color == PLAYERS_BITS.WHITE)):
-                            if (color == PLAYERS_BITS.BLACK and i == 7) or (color == PLAYERS_BITS.WHITE and i == 0):
-                                out[_to.location] = (FLAGS.PROMOTION,)
-                            else:
-                                out[_to.location] = (FLAGS.NORMAL,)
-
-                        elif not _to.piece and j != loc[1] \
-                                and ((color == PLAYERS_BITS.BLACK and loc[0] == 4 and i == loc[0] + 1)
-                                     or (color == PLAYERS_BITS.WHITE and loc[0] == 3) and i == loc[0] - 1):
-
-                            enp = self.square((i - 1, j)) if color == PLAYERS_BITS.BLACK \
-                                else self.square((i + 1, j))
-
-                            if enp.piece and enp.color != color \
-                                    and next(f for _, (t, f) in self.pawns_history.items()
-                                             if t == enp.location) == FLAGS.BIG_PAWN \
-                                    and len(self.pawns_history) == [lo for lo, _ in self.pawns_history.values()] \
-                                    .index(enp.location) + 1:
-                                out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[enp.piece - 1])
-            big_pawn()
+            :param _p: piece name from :attr:`PIECES` as an alphanumeric values.
+            :return: the :attr:`out` from the method with potential movements.
+            """
+            moves = self.countermoves(_p).get(_from)
+            if moves:
+                for m in moves:
+                    k = list(m.keys())[0]
+                    out[k] = m[k]
             return out
+
+        def pawn():
+            if not self.checks or explicit:
+                min_r, max_r, min_c, max_c = margins()
+
+                def big_pawn(_out):
+                    for rank in range(2):
+                        if color == PLAYERS_BITS.BLACK and loc[0] == 1:
+                            nonlocal _to
+                            _to = self.square((loc[0] + rank + 1, loc[1]))
+                            if not rank and _to.piece:
+                                break
+                            elif rank and not _to.piece and _from not in self.pawns_history:
+                                _out[_to.location] = (FLAGS.BIG_PAWN,)
+
+                        elif color == PLAYERS_BITS.WHITE and loc[0] == 6:
+                            _to = self.square((loc[0] - rank - 1, loc[1]))
+                            if not rank and _to.piece:
+                                break
+                            elif rank and not _to.piece and _from not in self.pawns_history:
+                                _out[_to.location] = (FLAGS.BIG_PAWN,)
+                    return _out
+
+                for i in range(min_r, max_r + 1):
+                    for j in range(min_c, max_c + 1):
+                        if loc != (i, j):
+                            _to = self.square((i, j))
+                            if _to.piece and _to.color != color \
+                                    and ((i > loc[0] and color == PLAYERS_BITS.BLACK)
+                                         or (i < loc[0] and color == PLAYERS_BITS.WHITE)) \
+                                    and (j == loc[1] + 1 or j == loc[1] - 1):
+                                if (color == PLAYERS_BITS.BLACK and i == 7) or (color == PLAYERS_BITS.WHITE and i == 0):
+                                    out[_to.location] = (FLAGS.CAPTURE + FLAGS.PROMOTION, PIECES[_to.piece - 1])
+                                else:
+                                    out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+
+                            elif not _to.piece and j == loc[1] \
+                                    and ((i == loc[0] + 1 and color == PLAYERS_BITS.BLACK)
+                                         or (i == loc[0] - 1 and color == PLAYERS_BITS.WHITE)):
+                                if (color == PLAYERS_BITS.BLACK and i == 7) or (color == PLAYERS_BITS.WHITE and i == 0):
+                                    out[_to.location] = (FLAGS.PROMOTION,)
+                                else:
+                                    out[_to.location] = (FLAGS.NORMAL,)
+
+                            elif not _to.piece and j != loc[1] \
+                                    and ((color == PLAYERS_BITS.BLACK and loc[0] == 4 and i == loc[0] + 1)
+                                         or (color == PLAYERS_BITS.WHITE and loc[0] == 3) and i == loc[0] - 1):
+
+                                enp = self.square((i - 1, j)) if color == PLAYERS_BITS.BLACK \
+                                    else self.square((i + 1, j))
+
+                                if enp.piece and enp.color != color \
+                                        and next(f for _, (t, f) in self.pawns_history.items()
+                                                 if t == enp.location) == FLAGS.BIG_PAWN \
+                                        and len(self.pawns_history) == [lo for lo, _ in self.pawns_history.values()] \
+                                        .index(enp.location) + 1:
+                                    out[_to.location] = (FLAGS.EP_CAPTURE, PIECES[enp.piece - 1])
+                return big_pawn(out)
+            else:
+                return checked_moves(PIECES.PAWN)
 
         def knight():
-            def pick(_to):
-                if not _to.piece:
-                    out[_to.location] = (FLAGS.NORMAL,)
-                elif _to.piece and _to.color != color:
-                    out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+            if not self.checks or explicit:
+                def pick(_to):
+                    if not _to.piece:
+                        out[_to.location] = (FLAGS.NORMAL,)
+                    elif _to.piece and _to.color != color:
+                        out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
 
-            for i in [2, -2]:
-                for j in [1, -1]:
-                    if (0 <= loc[0] + i <= 7) and (0 <= loc[1] + j <= 7):
-                        pick(self.square((loc[0] + i, loc[1] + j)))
+                for i in [2, -2]:
+                    for j in [1, -1]:
+                        if (0 <= loc[0] + i <= 7) and (0 <= loc[1] + j <= 7):
+                            pick(self.square((loc[0] + i, loc[1] + j)))
 
-                    if (0 <= loc[0] + j <= 7) and (0 <= loc[1] + i <= 7):
-                        pick(self.square((loc[0] + j, loc[1] + i)))
-            return out
+                        if (0 <= loc[0] + j <= 7) and (0 <= loc[1] + i <= 7):
+                            pick(self.square((loc[0] + j, loc[1] + i)))
+                return out
+            else:
+                return checked_moves(PIECES.KNIGHT)
 
         def rook(pick, pos, _max):
-            for x in range(_max):
-                if 0 <= loc[0] + x + 1 < 8 and 'd' not in pos \
-                        and pick(loc[0] + x + 1, loc[1]):
-                    pos.append('d')
-                if 0 <= loc[0] - x - 1 < 8 and 'u' not in pos \
-                        and pick(loc[0] - x - 1, loc[1]):
-                    pos.append('u')
-                if 0 <= loc[1] + x + 1 < 8 and 'r' not in pos \
-                        and pick(loc[0], loc[1] + x + 1):
-                    pos.append('r')
-                if 0 <= loc[1] - x - 1 < 8 and 'l' not in pos \
-                        and pick(loc[0], loc[1] - x - 1):
-                    pos.append('l')
-            return out
+            if not self.checks or explicit:
+                for x in range(_max):
+                    if 0 <= loc[0] + x + 1 < 8 and 'd' not in pos \
+                            and pick(loc[0] + x + 1, loc[1]):
+                        pos.append('d')
+                    if 0 <= loc[0] - x - 1 < 8 and 'u' not in pos \
+                            and pick(loc[0] - x - 1, loc[1]):
+                        pos.append('u')
+                    if 0 <= loc[1] + x + 1 < 8 and 'r' not in pos \
+                            and pick(loc[0], loc[1] + x + 1):
+                        pos.append('r')
+                    if 0 <= loc[1] - x - 1 < 8 and 'l' not in pos \
+                            and pick(loc[0], loc[1] - x - 1):
+                        pos.append('l')
+                return out
+            else:
+                return checked_moves(PIECES.ROOK)
 
         def bishop(pick, pos, _max):
-            for x, y in zip(range(_max), range(_max)):
-                if (0 <= loc[0] + x + 1 < 8 and 0 <= loc[1] + y + 1 < 8) \
-                        and 'dr' not in pos and pick(loc[0] + x + 1, loc[1] + y + 1):
-                    pos.append('dr')
-                if (0 <= loc[0] - x - 1 < 8 and 0 <= loc[1] + y + 1 < 8) \
-                        and 'ur' not in pos and pick(loc[0] - x - 1, loc[1] + y + 1):
-                    pos.append('ur')
-                if (0 <= loc[0] + x + 1 < 8 and 0 <= loc[1] - y - 1 < 8) \
-                        and 'dl' not in pos and pick(loc[0] + x + 1, loc[1] - y - 1):
-                    pos.append('dl')
-                if (0 <= loc[0] - x - 1 < 8 and 0 <= loc[1] - y - 1 < 8) \
-                        and 'ul' not in pos and pick(loc[0] - x - 1, loc[1] - y - 1):
-                    pos.append('ul')
-            return out
+            if not self.checks or explicit:
+                for x, y in zip(range(_max), range(_max)):
+                    if (0 <= loc[0] + x + 1 < 8 and 0 <= loc[1] + y + 1 < 8) \
+                            and 'dr' not in pos and pick(loc[0] + x + 1, loc[1] + y + 1):
+                        pos.append('dr')
+                    if (0 <= loc[0] - x - 1 < 8 and 0 <= loc[1] + y + 1 < 8) \
+                            and 'ur' not in pos and pick(loc[0] - x - 1, loc[1] + y + 1):
+                        pos.append('ur')
+                    if (0 <= loc[0] + x + 1 < 8 and 0 <= loc[1] - y - 1 < 8) \
+                            and 'dl' not in pos and pick(loc[0] + x + 1, loc[1] - y - 1):
+                        pos.append('dl')
+                    if (0 <= loc[0] - x - 1 < 8 and 0 <= loc[1] - y - 1 < 8) \
+                            and 'ul' not in pos and pick(loc[0] - x - 1, loc[1] - y - 1):
+                        pos.append('ul')
+                return out
+            else:
+                return checked_moves(PIECES.BISHOP)
 
         def queen(pick, pos, _max):
-            rook(pick, pos, _max)
-            bishop(pick, pos, _max)
-            return out
+            if not self.checks or explicit:
+                rook(pick, pos, _max)
+                bishop(pick, pos, _max)
+                return out
+            else:
+                return checked_moves(PIECES.QUEEN)
 
         def king():
-            min_r, max_r, min_c, max_c = margins()
+            if not self.checks or explicit:
+                min_r, max_r, min_c, max_c = margins()
 
-            for i in range(min_r, max_r + 1):
-                for j in range(min_c, max_c + 1):
-                    if loc != (i, j):
-                        _to = self.square((i, j))
-                        if not _to.piece:
-                            out[_to.location] = (FLAGS.NORMAL,)
-                        if _to.piece and color != _to.color:
-                            out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
-            return out
+                for i in range(min_r, max_r + 1):
+                    for j in range(min_c, max_c + 1):
+                        if loc != (i, j):
+                            _to = self.square((i, j))
+                            if not _to.piece:
+                                out[_to.location] = (FLAGS.NORMAL,)
+                            if _to.piece and color != _to.color:
+                                out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
+                return out
+            else:
+                return checked_moves(PIECES.KING)
 
         switch = {
             PIECES.PAWN: pawn,
@@ -478,31 +511,35 @@ class Board(object):
 
         for _r, _c in zip(rows, cols):
             _, _, loc = self.square((_r, _c))
-            moves = self.generate_moves(loc)
+            moves = self.generate_moves(loc, explicit=True)
 
             for value in moves.values():
                 if len(value) > 1 and value[1] == PIECES.KING:
                     checks.append((loc, moves))
         return checks
 
-    def counter_moves(self):  # NOSONAR
+    def countermoves(self, piece=None):  # NOSONAR
         rows, cols = np.where(self.c_board == self._turn)
-        counter_moves = []
+        cms = {}
 
         for _r, _c in zip(rows, cols):
-            piece, _, loc = self.square((_r, _c))
-            moves = self.generate_moves(loc)
+            _piece, _, loc = self.square((_r, _c))
 
-            for key in moves.keys():
-                for checks in self.checks:
-                    if key == checks[0] or key in checks[1] or PIECES[piece - 1] == PIECES.KING:
-                        board = cp.deepcopy(self)
-                        board.move(f'{loc}-{key}', turn=board.toggle_player())
+            if not piece or PIECES[_piece - 1] == piece:
+                moves = self.generate_moves(loc, explicit=True)
 
-                        if not board.checks:
-                            # TODO - Revamp the output to comply with common outputs.
-                            counter_moves.append({PIECES[piece - 1]: key})
-        return counter_moves
+                for to in moves.keys():
+                    for checks in self.checks:
+                        if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
+                            board = cp.deepcopy(self)
+                            board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True)
+
+                            if not board.checks:
+                                if loc in cms:
+                                    cms[loc].append({to: moves[to]})
+                                else:
+                                    cms[loc] = [{to: moves[to]}]
+        return cms
 
     def checkmate(self):  # NOSONAR
         pass
