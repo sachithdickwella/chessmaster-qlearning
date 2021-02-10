@@ -115,12 +115,6 @@ class Move(object):
         return details
 
 
-class M(object):
-
-    def __init__(self):
-        super(M, self).__init__()
-
-
 class Board(object):
 
     def __init__(self):
@@ -333,6 +327,11 @@ class Board(object):
 
         def checked_moves(_p):
             """
+            Get the list of countermoves for the checked player's pieces including the King piece.
+
+            Getting the countermoves for each of the piece of defender is tricky. Ergo, eager check
+            for each of the piece is mandatory and dismantle the checking from opponent player also
+            mandatory using only one move.
 
             :param _p: piece name from :attr:`PIECES` as an alphanumeric values.
             :return: the :attr:`out` from the method with potential movements.
@@ -542,4 +541,19 @@ class Board(object):
         return cms
 
     def checkmate(self):  # NOSONAR
-        pass
+        rows, cols = np.where(self.c_board == self._turn)
+        count = 0
+
+        for _r, _c in zip(rows, cols):
+            _piece, _, loc = self.square((_r, _c))
+            moves = self.generate_moves(loc, explicit=True)
+
+            for to in moves.keys():
+                for checks in self.checks:
+                    if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
+                        board = cp.deepcopy(self)
+                        board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True)
+
+                        if not board.checks:
+                            count += 1
+        return not bool(count) and bool(self.checks)
