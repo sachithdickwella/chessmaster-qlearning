@@ -333,6 +333,11 @@ class Board(object):
 
         def checked_moves(_p):
             """
+            Get the list of countermoves for the checked player's pieces including the King piece.
+
+            Getting the countermoves for each of the piece of defender is tricky. Ergo, eager check
+            for each of the piece is mandatory and dismantle the checking from opponent player also
+            mandatory using only one move.
 
             :param _p: piece name from :attr:`PIECES` as an alphanumeric values.
             :return: the :attr:`out` from the method with potential movements.
