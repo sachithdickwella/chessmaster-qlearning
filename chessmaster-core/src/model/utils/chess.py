@@ -48,10 +48,10 @@ class Move(object):
 
     * color - which color has been moved.
     * _from - source square location of the move initiated from.
-    * _to - destination square location of the move lasts.
+    * _to -   destination square location of the move lasts.
     * piece - chess piece name which is moved.
-    * san - standard algebraic notation for the move. May not use by the downstream program.
-    * flag - if the something special happens besides a simple move, flag character for that
+    * san -   standard algebraic notation for the move. May not use by the downstream program.
+    * flag -  if the something special happens besides a simple move, flag character for that
              move.
     * captured - flag if the movement captured a opponent's piece and that piece's name.
 
@@ -64,13 +64,13 @@ class Move(object):
         Initialize :class:`Move` instances with the default member values generated from the
         movement by :class:`Board`.
 
-        :param color: which color this movement originated from.
-        :param _from: source square location of the move initiated from.
-        :param _to: destination/target square location which the piece successfully moved.
-        :param piece: chess piece name which this move originated.
-        :param san: standard algebraic notation for the moves.
-        :param flag: if something significant happens during this movement.
-        :param captured: flag if the movement captured a opponent's piece and that piece's name.
+        :param color:     which color this movement originated from.
+        :param _from:     source square location of the move initiated from.
+        :param _to:       destination/target square location which the piece successfully moved.
+        :param piece:     chess piece name which this move originated.
+        :param san:       standard algebraic notation for the moves.
+        :param flag:      if something significant happens during this movement.
+        :param captured:  flag if the movement captured a opponent's piece and that piece's name.
         :param promotion: flag if the pawn movement is a promotion and to what it is promoted to.
         """
         super(Move, self).__init__()
@@ -128,7 +128,7 @@ class Board(object):
         self._board, self.c_board = self.setup_board()
 
         self._turn = PLAYERS_BITS.WHITE
-        self.checks = []
+        self.checks, self.is_checkmate = [], False
 
     def __str__(self):
         return "Pieces Location:\n" \
@@ -188,7 +188,7 @@ class Board(object):
         on that square, return the piece value. Otherwise 0 returns.
 
         :param san: algebraic notation of the square (ex: e4, a8, b6).
-        :return: the square value for input algebraic notation.
+        :return:    the square value for input algebraic notation.
         """
         if type(san) is not str and type(san) is not tuple:
             raise TypeError('Item index should be string Algebraic Notation or Tuple index location')
@@ -222,17 +222,19 @@ class Board(object):
         """
         return PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
-    def move(self, move, promotion=None, turn=None, explicit=False):  # NOSONAR
+    def move(self, move, promotion=None, turn=None, explicit=False, is_checkmate=True):  # NOSONAR
         """
         Get the move details by passing the algebraic notation of the move and return
         'None' if the move is an illegal.
 
-        :param move: algebraic notation of 2 squares that the piece should moved from
-        and the destination (ex: b2-b4).
-        :param promotion: pawn promoted piece value on pawn promotions.
-        :param turn: mark the status of which player's turn is it.
-        :param explicit: mark if the move is explicit or not. Explicit move is sample move
-                         despite the current board status.
+        :param move:         algebraic notation of 2 squares that the piece should moved
+                             from and the destination (ex: b2-b4).
+        :param promotion:    pawn promoted piece value on pawn promotions.
+        :param turn:         mark the status of which player's turn is it.
+        :param explicit:     mark if the move is explicit or not. Explicit move is sample
+                             move despite the current board status.
+        :param is_checkmate: to notify the method call required to check if this move
+                             is checkmate or not.
         :return: an instance of :class:`Move` class with the details of source, target,
         color, flag, target SAN and piece if it's legal move. Otherwise 'None' returns.
         """
@@ -262,7 +264,8 @@ class Board(object):
             d_piece, dp_color, _ = self.square(_to)
 
             if (not piece or self._turn != p_color) \
-                    or (d_piece and self._turn == dp_color):
+                    or (d_piece and self._turn == dp_color) \
+                    or self.is_checkmate:
                 return None
 
             moves = self.generate_moves(_from, explicit=explicit)
@@ -272,6 +275,7 @@ class Board(object):
 
                 self._turn = self.toggle_player()
                 self.checks = self.has_check(turn)
+                self.is_checkmate = self.checkmate() if is_checkmate else False
 
                 piece = PIECES[piece - 1]
                 p_color = PLAYERS[p_color - 1]
@@ -295,8 +299,8 @@ class Board(object):
             of each pieces.
 
             :param fun: to be invoked for each of the piece with the parameters defined
-                         below in this very same method.
-            :return: the `out` dictionary from parent method of this method.
+                        below in this very same method.
+            :return:    the `out` dictionary from parent method of this method.
             """
 
             def pick(i, j):
@@ -531,7 +535,7 @@ class Board(object):
                     for checks in self.checks:
                         if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
                             board = cp.deepcopy(self)
-                            board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True)
+                            board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True, is_checkmate=False)
 
                             if not board.checks:
                                 if loc in cms:
@@ -552,7 +556,7 @@ class Board(object):
                 for checks in self.checks:
                     if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
                         board = cp.deepcopy(self)
-                        board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True)
+                        board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True, is_checkmate=False)
 
                         if not board.checks:
                             count += 1
