@@ -264,7 +264,8 @@ class Board(object):
             d_piece, dp_color, _ = self.square(_to)
 
             if (not piece or self._turn != p_color) \
-                    or (d_piece and self._turn == dp_color) or self.is_checkmate:
+                    or (d_piece and self._turn == dp_color) \
+                    or self.is_checkmate:
                 return None
 
             moves = self.generate_moves(_from, explicit=explicit)
