@@ -244,15 +244,19 @@ class Board(object):
             _piece = _piece.upper()
 
             if _flag == FLAGS.CAPTURE:
-                return _piece + 'x' + _to
+                san = _piece + 'x' + _to
             elif _flag == FLAGS.EP_CAPTURE:
-                return _piece + 'x' + _to + 'e.p'
+                san = _piece + 'x' + _to + 'e.p'
             elif _flag == FLAGS.PROMOTION:
-                return _to + '=' + promotion.upper()
+                san = _to + '=' + promotion.upper()
             elif _flag == FLAGS.CAPTURE + FLAGS.PROMOTION:
-                return _piece + 'x' + _to + '=' + promotion.upper()
+                san = _piece + 'x' + _to + '=' + promotion.upper()
             else:
-                return _piece + _to
+                san = _piece + _to
+
+            if self.checks:
+                san += '#' if self.is_checkmate else '+'
+            return san
 
         if type(move) is not str:
             raise TypeError('Item index should be Algebraic Notation')
