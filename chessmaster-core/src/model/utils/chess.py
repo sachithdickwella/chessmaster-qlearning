@@ -120,6 +120,7 @@ class Board(object):
     def __init__(self):
         super(Board, self).__init__()
         self.pawns_history = {}
+        self.king_history, self.rook_history = [], []
 
         self.ranks = dict(zip(range(1, 9), range(8)))
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
@@ -159,8 +160,8 @@ class Board(object):
 
         return board, _board
 
-    def update_board(self, _from, _to, flag, promotion):
-        f_piece, _, f_loc = self.square(_from)
+    def update_board(self, _from, _to, flag, promotion):  # NOSONAR
+        f_piece, color, f_loc = self.square(_from)
         _, _, t_loc = self.square(_to)
 
         if PIECES[f_piece - 1] == PIECES.PAWN:  # Strictly for PAWNs only.
@@ -176,6 +177,12 @@ class Board(object):
                     raise PromotionInvalidException(f'Provided promotion value is not valid: \'{promotion}\'')
                 else:
                     self._board[f_loc] = self.pieces[promotion]
+
+        elif PIECES[f_piece - 1] == PIECES.ROOK:
+            pass
+
+        elif PIECES[f_piece - 1] == PIECES.KING:
+            pass
 
         self._board[t_loc] = self._board[f_loc]
         self.c_board[t_loc] = self.c_board[f_loc]
@@ -382,7 +389,8 @@ class Board(object):
                                     and ((i > loc[0] and color == PLAYERS_BITS.BLACK)
                                          or (i < loc[0] and color == PLAYERS_BITS.WHITE)) \
                                     and (j == loc[1] + 1 or j == loc[1] - 1):
-                                if (color == PLAYERS_BITS.BLACK and i == 7) or (color == PLAYERS_BITS.WHITE and i == 0):
+                                if (color == PLAYERS_BITS.BLACK and i == 7) \
+                                        or (color == PLAYERS_BITS.WHITE and i == 0):
                                     out[_to.location] = (FLAGS.CAPTURE + FLAGS.PROMOTION, PIECES[_to.piece - 1])
                                 else:
                                     out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
@@ -390,7 +398,8 @@ class Board(object):
                             elif not _to.piece and j == loc[1] \
                                     and ((i == loc[0] + 1 and color == PLAYERS_BITS.BLACK)
                                          or (i == loc[0] - 1 and color == PLAYERS_BITS.WHITE)):
-                                if (color == PLAYERS_BITS.BLACK and i == 7) or (color == PLAYERS_BITS.WHITE and i == 0):
+                                if (color == PLAYERS_BITS.BLACK and i == 7) \
+                                        or (color == PLAYERS_BITS.WHITE and i == 0):
                                     out[_to.location] = (FLAGS.PROMOTION,)
                                 else:
                                     out[_to.location] = (FLAGS.NORMAL,)
@@ -489,9 +498,13 @@ class Board(object):
                                 out[_to.location] = (FLAGS.NORMAL,)
                             if _to.piece and color != _to.color:
                                 out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
-                return out
+
+                return castling(out)
             else:
                 return checked_moves(PIECES.KING)
+
+        def castling(_out):
+            pass
 
         switch = {
             PIECES.PAWN: pawn,
@@ -509,9 +522,6 @@ class Board(object):
             return common(switch.get(PIECES[piece]))
         else:
             return switch.get(PIECES[piece], None)()
-
-    def castling(self):  # NOSONAR
-        pass
 
     def has_check(self, _turn=None):
         rows, cols = np.where(self.c_board == [_turn if _turn else self.toggle_player()])
@@ -563,6 +573,6 @@ class Board(object):
                         board = cp.deepcopy(self)
                         board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True, cm_enabled=False)
 
-                        if not board.checks:
-                            count += 1
+                        count += 1 if not board.checks else 0
+
         return not bool(count) and bool(self.checks)
