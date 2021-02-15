@@ -222,36 +222,41 @@ class Board(object):
         """
         return PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
-    def move(self, move, promotion=None, turn=None, explicit=False, is_checkmate=True):  # NOSONAR
+    def move(self, move, promotion=None, turn=None, explicit=False, cm_enabled=True):  # NOSONAR
         """
         Get the move details by passing the algebraic notation of the move and return
         'None' if the move is an illegal.
 
-        :param move:         algebraic notation of 2 squares that the piece should moved
-                             from and the destination (ex: b2-b4).
-        :param promotion:    pawn promoted piece value on pawn promotions.
-        :param turn:         mark the status of which player's turn is it.
-        :param explicit:     mark if the move is explicit or not. Explicit move is sample
-                             move despite the current board status.
-        :param is_checkmate: to notify the method call required to check if this move
-                             is checkmate or not.
-        :return: an instance of :class:`Move` class with the details of source, target,
-        color, flag, target SAN and piece if it's legal move. Otherwise 'None' returns.
+        :param move:       algebraic notation of 2 squares that the piece should moved
+                           from and the destination (ex: b2-b4).
+        :param promotion:  pawn promoted piece value on pawn promotions.
+        :param turn:       mark the status of which player's turn is it.
+        :param explicit:   mark if the move is explicit or not. Explicit move is sample
+                           move despite the current board status.
+        :param cm_enabled: to notify the method call required to check if this move
+                           is checkmate or not.
+        :return:           an instance of :class:`Move` class with the details of source, target,
+                           color, flag, target SAN and piece if it's legal move. Otherwise 'None'
+                           returns.
         """
 
         def notation(_piece, _to, _flag):
             _piece = _piece.upper()
 
             if _flag == FLAGS.CAPTURE:
-                return _piece + 'x' + _to
+                san = _piece + 'x' + _to
             elif _flag == FLAGS.EP_CAPTURE:
-                return _piece + 'x' + _to + 'e.p'
+                san = _piece + 'x' + _to + 'e.p'
             elif _flag == FLAGS.PROMOTION:
-                return _to + '=' + promotion.upper()
+                san = _to + '=' + promotion.upper()
             elif _flag == FLAGS.CAPTURE + FLAGS.PROMOTION:
-                return _piece + 'x' + _to + '=' + promotion.upper()
+                san = _piece + 'x' + _to + '=' + promotion.upper()
             else:
-                return _piece + _to
+                san = _piece + _to
+
+            if self.checks:
+                san += '#' if self.is_checkmate else '+'
+            return san
 
         if type(move) is not str:
             raise TypeError('Item index should be Algebraic Notation')
@@ -275,7 +280,7 @@ class Board(object):
 
                 self._turn = self.toggle_player()
                 self.checks = self.has_check(turn)
-                self.is_checkmate = self.checkmate() if is_checkmate else False
+                self.is_checkmate = self.checkmate() if cm_enabled else False
 
                 piece = PIECES[piece - 1]
                 p_color = PLAYERS[p_color - 1]
@@ -535,7 +540,7 @@ class Board(object):
                     for checks in self.checks:
                         if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
                             board = cp.deepcopy(self)
-                            board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True, is_checkmate=False)
+                            board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True, cm_enabled=False)
 
                             if not board.checks:
                                 if loc in cms:
@@ -556,7 +561,7 @@ class Board(object):
                 for checks in self.checks:
                     if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
                         board = cp.deepcopy(self)
-                        board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True, is_checkmate=False)
+                        board.move(f'{loc}-{to}', turn=board.toggle_player(), explicit=True, cm_enabled=False)
 
                         if not board.checks:
                             count += 1
