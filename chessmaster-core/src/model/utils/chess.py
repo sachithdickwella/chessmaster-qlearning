@@ -25,7 +25,7 @@ from utils.commons import PromotionInvalidException
 # Players of the game.
 PLAYERS = namedtuple('Players', ('WHITE', 'BLACK'))(*'wb')
 PLAYERS_BITS = namedtuple('PlayersBits', ('WHITE', 'BLACK'))(1, 2)
-# Flags for the movement.
+# Flags for each the piece movement.
 FLAGS = namedtuple('Flags', ('NORMAL',
                              'CAPTURE',
                              'BIG_PAWN',
@@ -35,7 +35,13 @@ FLAGS = namedtuple('Flags', ('NORMAL',
                              'QUEEN_SIDE_CASTLE'))(*'ncbepkq')
 # Chess pieces of the board.
 PIECES = namedtuple('Pieces', ('PAWN', 'KNIGHT', 'BISHOP', 'ROOK', 'QUEEN', 'KING'))(*'pnbrqk')
+# Promotable chess pieces during the "PAWN PROMOTION".
 PROMOTABLE = 'nbrq'
+# Default locations of KINGs and ROOKs for castling.
+INIT_PIECE_LOCATIONS = namedtuple('InitialPieceLocations', ['KING', 'ROOK'])(
+    ['e1', 'e8'],
+    ['a1', 'h1', 'a8', 'h8']
+)
 
 
 class Move(object):
@@ -178,11 +184,13 @@ class Board(object):
                 else:
                     self._board[f_loc] = self.pieces[promotion]
 
-        elif PIECES[f_piece - 1] == PIECES.ROOK:
-            pass
+        elif PIECES[f_piece - 1] == PIECES.ROOK and \
+                _from in INIT_PIECE_LOCATIONS.ROOK and _from not in self.rook_history:
+            self.rook_history.append(_from)
 
-        elif PIECES[f_piece - 1] == PIECES.KING:
-            pass
+        elif PIECES[f_piece - 1] == PIECES.KING and \
+                _from in INIT_PIECE_LOCATIONS.KING and _from not in self.king_history:
+            self.king_history.append(_from)
 
         self._board[t_loc] = self._board[f_loc]
         self.c_board[t_loc] = self.c_board[f_loc]
