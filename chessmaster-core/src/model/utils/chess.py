@@ -170,7 +170,7 @@ class Board(object):
         f_piece, color, f_loc = self.square(_from)
         _, _, t_loc = self.square(_to)
 
-        if PIECES[f_piece - 1] == PIECES.PAWN:  # Strictly for PAWNs only.
+        if PIECES[f_piece - 1] == PIECES.PAWN:  # Strictly for PAWNs updates only.
             self.pawns_history[_from] = (_to, flag)
 
             if flag == FLAGS.EP_CAPTURE:
@@ -188,9 +188,30 @@ class Board(object):
                 _from in INIT_PIECE_LOCATIONS.ROOK and _from not in self.rook_history:
             self.rook_history.append(_from)
 
-        elif PIECES[f_piece - 1] == PIECES.KING and \
-                _from in INIT_PIECE_LOCATIONS.KING and _from not in self.king_history:
-            self.king_history.append(_from)
+        elif PIECES[f_piece - 1] == PIECES.KING:
+            if _from in INIT_PIECE_LOCATIONS.KING and _from not in self.king_history:
+                self.king_history.append(_from)
+
+            if flag == FLAGS.KING_SIDE_CASTLE:
+                piece, _, loc = self.square((t_loc[0], 7))
+                if PIECES[piece - 1] == PIECES.ROOK and \
+                        loc in INIT_PIECE_LOCATIONS.ROOK and loc not in self.rook_history:
+                    self.rook_history.append(loc)
+
+                    self._board[t_loc[0], t_loc[1] - 1] = self._board[t_loc[0], 7]
+                    self.c_board[t_loc[0], t_loc[1] - 1] = self.c_board[t_loc[0], 7]
+
+                    self._board[t_loc[0], 7] = self.c_board[t_loc[0], 7] = 0
+            elif flag == FLAGS.QUEEN_SIDE_CASTLE:
+                piece, _, loc = self.square((t_loc[0], 0))
+                if PIECES[piece - 1] == PIECES.ROOK and \
+                        loc in INIT_PIECE_LOCATIONS.ROOK and loc not in self.rook_history:
+                    self.rook_history.append(loc)
+
+                    self._board[t_loc[0], t_loc[1] + 1] = self._board[t_loc[0], 0]
+                    self.c_board[t_loc[0], t_loc[1] + 1] = self.c_board[t_loc[0], 0]
+
+                    self._board[t_loc[0], 0] = self.c_board[t_loc[0], 0] = 0
 
         self._board[t_loc] = self._board[f_loc]
         self.c_board[t_loc] = self.c_board[f_loc]
@@ -512,7 +533,42 @@ class Board(object):
                 return checked_moves(PIECES.KING)
 
         def castling(_out):
-            pass
+            def base_check(row, _f, _t):
+                """
+                Check the 2-sides of the King piece for remaining pieces which moved
+                or not to determine if the castling is possible or not.
+
+                :param row: rank number base on 0 as an index to traverse the row.
+                :param _f:  starting/from index of the column of the board.
+                :param _t:  ending/to index of the column of the board.
+                :return:    the list of found piece besides the king's row.
+                """
+                _ps = []
+                for col in range(_f, _t):
+                    p, _, location = self.square((row, col))
+                    if p:
+                        _ps.append({PIECES[p - 1]: location})
+
+                if len(_ps) == 1:
+                    sq = _ps[0].get(PIECES.ROOK)
+                    if sq and sq in [_sq for _sq in INIT_PIECE_LOCATIONS.ROOK if _sq.endswith(str(_from[1]))] \
+                            and sq not in self.rook_history:
+                        return True
+
+            if _from in INIT_PIECE_LOCATIONS.KING and _from not in self.king_history:
+                # King side/short castling operations possibility.
+                _pk = base_check(loc[0], loc[1] + 1, 8)
+                # Queen side/long castling operations possibility.
+                _pq = base_check(loc[0], 0, loc[1])
+
+                if _pk:
+                    to = self.square((loc[0], loc[1] + 2))
+                    _out[to.location] = (FLAGS.KING_SIDE_CASTLE,)
+
+                if _pq:
+                    to = self.square((loc[0], loc[1] - 2))
+                    _out[to.location] = (FLAGS.QUEEN_SIDE_CASTLE,)
+            return _out
 
         switch = {
             PIECES.PAWN: pawn,
