@@ -533,19 +533,18 @@ class Board(object):
                 return checked_moves(PIECES.KING)
 
         def castling(_out):
-            def base_check(row, _f, _t):
+            def base_check(_f, _t):
                 """
                 Check the 2-sides of the King piece for remaining pieces which moved
                 or not to determine if the castling is possible or not.
 
-                :param row: rank number base on 0 as an index to traverse the row.
-                :param _f:  starting/from index of the column of the board.
-                :param _t:  ending/to index of the column of the board.
-                :return:    the list of found piece besides the king's row.
+                :param _f: starting/from index of the column of the board.
+                :param _t: ending/to index of the column of the board.
+                :return:   the list of found piece besides the king's row.
                 """
                 _ps = []
                 for col in range(_f, _t):
-                    p, _, location = self.square((row, col))
+                    p, _, location = self.square((loc[0], col))
                     if p:
                         _ps.append({PIECES[p - 1]: location})
 
@@ -557,9 +556,9 @@ class Board(object):
 
             if _from in INIT_PIECE_LOCATIONS.KING and _from not in self.king_history:
                 # King side/short castling operations possibility.
-                _pk = base_check(loc[0], loc[1] + 1, 8)
+                _pk = base_check(loc[1] + 1, 8)
                 # Queen side/long castling operations possibility.
-                _pq = base_check(loc[0], 0, loc[1])
+                _pq = base_check(0, loc[1])
 
                 if _pk:
                     to = self.square((loc[0], loc[1] + 2))
