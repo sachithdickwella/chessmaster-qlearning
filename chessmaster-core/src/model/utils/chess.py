@@ -170,49 +170,48 @@ class Board(object):
         f_piece, _, f_loc = self.square(_from)
         _, _, t_loc = self.square(_to)
 
-        if flag and promotion:
-            if PIECES[f_piece - 1] == PIECES.PAWN:  # Strictly for PAWNs updates only.
-                self.pawns_history[_from] = (_to, flag)
+        if PIECES[f_piece - 1] == PIECES.PAWN:  # Strictly for PAWNs updates only.
+            self.pawns_history[_from] = (_to, flag)
 
-                if flag == FLAGS.EP_CAPTURE:
-                    idx = 1 if self._turn == PLAYERS_BITS.WHITE else -1
-                    self._board[t_loc[0] + idx, t_loc[1]] = self.c_board[t_loc[0] + idx, t_loc[1]] = 0
-                elif flag == FLAGS.PROMOTION or flag == FLAGS.CAPTURE + FLAGS.PROMOTION:
-                    if not promotion:
-                        raise PromotionInvalidException(f'Promotion value is not provided: \'{promotion}\'')
-                    elif promotion not in PROMOTABLE:
-                        raise PromotionInvalidException(f'Provided promotion value is not valid: \'{promotion}\'')
-                    else:
-                        self._board[f_loc] = self.pieces[promotion]
+            if flag == FLAGS.EP_CAPTURE:
+                idx = 1 if self._turn == PLAYERS_BITS.WHITE else -1
+                self._board[t_loc[0] + idx, t_loc[1]] = self.c_board[t_loc[0] + idx, t_loc[1]] = 0
+            elif flag == FLAGS.PROMOTION or flag == FLAGS.CAPTURE + FLAGS.PROMOTION:
+                if not promotion:
+                    raise PromotionInvalidException(f'Promotion value is not provided: \'{promotion}\'')
+                elif promotion not in PROMOTABLE:
+                    raise PromotionInvalidException(f'Provided promotion value is not valid: \'{promotion}\'')
+                else:
+                    self._board[f_loc] = self.pieces[promotion]
 
-            elif PIECES[f_piece - 1] == PIECES.ROOK and \
-                    _from in INIT_PIECE_LOCATIONS.ROOK and _from not in self.rook_history:
-                self.rook_history.append(_from)
+        elif PIECES[f_piece - 1] == PIECES.ROOK and \
+                _from in INIT_PIECE_LOCATIONS.ROOK and _from not in self.rook_history:
+            self.rook_history.append(_from)
 
-            elif PIECES[f_piece - 1] == PIECES.KING:
-                if _from in INIT_PIECE_LOCATIONS.KING and _from not in self.king_history:
-                    self.king_history.append(_from)
+        elif PIECES[f_piece - 1] == PIECES.KING:
+            if _from in INIT_PIECE_LOCATIONS.KING and _from not in self.king_history:
+                self.king_history.append(_from)
 
-                if flag == FLAGS.KING_SIDE_CASTLE:
-                    piece, _, loc = self.square((t_loc[0], 7))
-                    if PIECES[piece - 1] == PIECES.ROOK and \
-                            loc in INIT_PIECE_LOCATIONS.ROOK and loc not in self.rook_history:
-                        self.rook_history.append(loc)
+            if flag == FLAGS.KING_SIDE_CASTLE:
+                piece, _, loc = self.square((t_loc[0], 7))
+                if PIECES[piece - 1] == PIECES.ROOK and \
+                        loc in INIT_PIECE_LOCATIONS.ROOK and loc not in self.rook_history:
+                    self.rook_history.append(loc)
 
-                        self._board[t_loc[0], t_loc[1] - 1] = self._board[t_loc[0], 7]
-                        self.c_board[t_loc[0], t_loc[1] - 1] = self.c_board[t_loc[0], 7]
+                    self._board[t_loc[0], t_loc[1] - 1] = self._board[t_loc[0], 7]
+                    self.c_board[t_loc[0], t_loc[1] - 1] = self.c_board[t_loc[0], 7]
 
-                        self._board[t_loc[0], 7] = self.c_board[t_loc[0], 7] = 0
-                elif flag == FLAGS.QUEEN_SIDE_CASTLE:
-                    piece, _, loc = self.square((t_loc[0], 0))
-                    if PIECES[piece - 1] == PIECES.ROOK and \
-                            loc in INIT_PIECE_LOCATIONS.ROOK and loc not in self.rook_history:
-                        self.rook_history.append(loc)
+                    self._board[t_loc[0], 7] = self.c_board[t_loc[0], 7] = 0
+            elif flag == FLAGS.QUEEN_SIDE_CASTLE:
+                piece, _, loc = self.square((t_loc[0], 0))
+                if PIECES[piece - 1] == PIECES.ROOK and \
+                        loc in INIT_PIECE_LOCATIONS.ROOK and loc not in self.rook_history:
+                    self.rook_history.append(loc)
 
-                        self._board[t_loc[0], t_loc[1] + 1] = self._board[t_loc[0], 0]
-                        self.c_board[t_loc[0], t_loc[1] + 1] = self.c_board[t_loc[0], 0]
+                    self._board[t_loc[0], t_loc[1] + 1] = self._board[t_loc[0], 0]
+                    self.c_board[t_loc[0], t_loc[1] + 1] = self.c_board[t_loc[0], 0]
 
-                        self._board[t_loc[0], 0] = self.c_board[t_loc[0], 0] = 0
+                    self._board[t_loc[0], 0] = self.c_board[t_loc[0], 0] = 0
 
         self._board[t_loc] = self._board[f_loc]
         self.c_board[t_loc] = self.c_board[f_loc]
@@ -607,6 +606,10 @@ class Board(object):
     def threat_check(self, _from, _to):
         b = cp.deepcopy(self)
         b.update_board(_from, _to)
+
+        _, color, _ = self.square(_from)
+        if color != b._turn:
+            b._turn = color
 
         return bool(b.has_check())
 
