@@ -127,6 +127,7 @@ class Board(object):
         super(Board, self).__init__()
         self.pawns_history = {}
         self.king_history, self.rook_history = [], []
+        self.dummy = False
 
         self.ranks = dict(zip(range(1, 9), range(8)))
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
@@ -143,6 +144,9 @@ class Board(object):
                "Pieces Location in Color:\n" \
                "  {}".format(np.array2string(self._board, separator=', ', prefix='\t'),
                              np.array2string(self.c_board, separator=', ', prefix='\t'))
+
+    def __call__(self, dummy):
+        self.dummy = dummy
 
     def setup_board(self):
         # Board with pieces location despite color of the pieces.
@@ -258,23 +262,22 @@ class Board(object):
         """
         return PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
-    def move(self, move, promotion=None, turn=None, explicit=False, threat_enabled=True, cm_enabled=True):  # NOSONAR
+    def move(self, move, promotion=None, turn=None, explicit=False, cm_enabled=True):  # NOSONAR
         """
         Get the move details by passing the algebraic notation of the move and return
         'None' if the move is an illegal.
 
-        :param move:            algebraic notation of 2 squares that the piece should moved
-                                from and the destination (ex: b2-b4).
-        :param promotion:       pawn promoted piece value on pawn promotions.
-        :param turn:            mark the status of which player's turn is it.
-        :param explicit:        mark if the move is explicit or not. Explicit move is sample
-                                move despite the current board status.
-        :param threat_enabled:  check if the move will be end-up making King's check.
-        :param cm_enabled:      to notify the method call required to check if this move
-                                is checkmate or not.
-        :return:                an instance of :class:`Move` class with the details of source, target,
-                                color, flag, target SAN and piece if it's legal move. Otherwise 'None'
-                                returns.
+        :param move:       algebraic notation of 2 squares that the piece should moved
+                           from and the destination (ex: b2-b4).
+        :param promotion:  pawn promoted piece value on pawn promotions.
+        :param turn:       mark the status of which player's turn is it.
+        :param explicit:   mark if the move is explicit or not. Explicit move is sample
+                           move despite the current board status.
+        :param cm_enabled: to notify the method call required to check if this move
+                           is checkmate or not.
+        :return:           an instance of :class:`Move` class with the details of source, target,
+                           color, flag, target SAN and piece if it's legal move. Otherwise 'None'
+                           returns.
         """
 
         def notation(_piece, _to, _flag):
@@ -314,7 +317,7 @@ class Board(object):
                     or self.is_checkmate:
                 return None
 
-            moves = self.generate_moves(_from, explicit=explicit, threat_enabled=threat_enabled)
+            moves = self.generate_moves(_from, explicit=explicit)
 
             if _to in moves:
                 self.update_board(_from, _to, moves[_to][0], promotion)
@@ -331,7 +334,7 @@ class Board(object):
             else:
                 return None
 
-    def generate_moves(self, _from, explicit=False, threat_enabled=True):  # NOSONAR
+    def generate_moves(self, _from, explicit=False):  # NOSONAR
         piece, color, loc = self.square(_from)
         if not piece:
             return None
@@ -528,12 +531,10 @@ class Board(object):
                     for j in range(min_c, max_c + 1):
                         if loc != (i, j):
                             _to = self.square((i, j))
-                            if not _to.piece and threat_enabled \
-                                    and not self.threat_check(_from, _to.location):
+                            if not _to.piece:
                                 out[_to.location] = (FLAGS.NORMAL,)
 
-                            if _to.piece and color != _to.color and threat_enabled \
-                                    and not self.threat_check(_from, _to.location):
+                            if _to.piece and color != _to.color:
                                 out[_to.location] = (FLAGS.CAPTURE, PIECES[_to.piece - 1])
                 return castling(out)
             else:
@@ -604,14 +605,17 @@ class Board(object):
             return switch.get(PIECES[piece], None)()
 
     def threat_check(self, _from, _to):
-        b = cp.deepcopy(self)
-        b.update_board(_from, _to)
-
         _, color, _ = self.square(_from)
-        if color != b._turn:
-            b._turn = color
 
-        return bool(b.has_check())
+        board = cp.deepcopy(self)
+        board(dummy=True)
+
+        board.update_board(_from, _to)
+
+        if color != board._turn:
+            board._turn = color
+
+        return bool(board.has_check())
 
     def has_check(self, _turn=None):
         rows, cols = np.where(self.c_board == [_turn if _turn else self.toggle_player()])
@@ -619,7 +623,7 @@ class Board(object):
 
         for _r, _c in zip(rows, cols):
             _, _, loc = self.square((_r, _c))
-            moves = self.generate_moves(loc, explicit=True, threat_enabled=False)
+            moves = self.generate_moves(loc, explicit=True)
 
             for value in moves.values():
                 if len(value) > 1 and value[1] == PIECES.KING:
@@ -634,16 +638,17 @@ class Board(object):
             _piece, _, loc = self.square((_r, _c))
 
             if not piece or PIECES[_piece - 1] == piece:
-                moves = self.generate_moves(loc, explicit=True, threat_enabled=False)
+                moves = self.generate_moves(loc, explicit=True)
 
                 for to in moves.keys():
                     for checks in self.checks:
                         if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
                             board = cp.deepcopy(self)
+                            board(dummy=True)
+
                             board.move(f'{loc}-{to}',
                                        turn=board.toggle_player(),
                                        explicit=True,
-                                       threat_enabled=False,
                                        cm_enabled=False)
 
                             if not board.checks:
@@ -659,16 +664,17 @@ class Board(object):
 
         for _r, _c in zip(rows, cols):
             _piece, _, loc = self.square((_r, _c))
-            moves = self.generate_moves(loc, explicit=True, threat_enabled=False)
+            moves = self.generate_moves(loc, explicit=True)
 
             for to in moves.keys():
                 for checks in self.checks:
                     if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
                         board = cp.deepcopy(self)
+                        board(dummy=True)
+
                         board.move(f'{loc}-{to}',
                                    turn=board.toggle_player(),
                                    explicit=True,
-                                   threat_enabled=False,
                                    cm_enabled=False)
 
                         count += 1 if not board.checks else 0
