@@ -127,7 +127,7 @@ class Board(object):
         super(Board, self).__init__()
         self.pawns_history = {}
         self.king_history, self.rook_history = [], []
-        self.dummy = False
+        self.deepcopy = False
 
         self.ranks = dict(zip(range(1, 9), range(8)))
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
@@ -145,8 +145,13 @@ class Board(object):
                "  {}".format(np.array2string(self._board, separator=', ', prefix='\t'),
                              np.array2string(self.c_board, separator=', ', prefix='\t'))
 
-    def __call__(self, dummy):
-        self.dummy = dummy
+    def __call__(self, deepcopy=False):
+        if deepcopy:
+            board = cp.deepcopy(self)
+            board.deepcopy = deepcopy
+            return board
+        else:
+            return cp.copy(self)
 
     def setup_board(self):
         # Board with pieces location despite color of the pieces.
@@ -604,12 +609,10 @@ class Board(object):
         else:
             return switch.get(PIECES[piece], None)()
 
-    def threat_check(self, _from, _to):
+    def threat_check1(self, _from, _to):
         _, color, _ = self.square(_from)
 
-        board = cp.deepcopy(self)
-        board(dummy=True)
-
+        board = self(deepcopy=True)
         board.update_board(_from, _to)
 
         if color != board._turn:
@@ -643,9 +646,7 @@ class Board(object):
                 for to in moves.keys():
                     for checks in self.checks:
                         if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
-                            board = cp.deepcopy(self)
-                            board(dummy=True)
-
+                            board = self(deepcopy=True)
                             board.move(f'{loc}-{to}',
                                        turn=board.toggle_player(),
                                        explicit=True,
@@ -669,9 +670,7 @@ class Board(object):
             for to in moves.keys():
                 for checks in self.checks:
                     if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
-                        board = cp.deepcopy(self)
-                        board(dummy=True)
-
+                        board = self(deepcopy=True)
                         board.move(f'{loc}-{to}',
                                    turn=board.toggle_player(),
                                    explicit=True,
