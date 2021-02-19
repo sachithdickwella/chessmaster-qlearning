@@ -127,7 +127,7 @@ class Board(object):
         super(Board, self).__init__()
         self.pawns_history = {}
         self.king_history, self.rook_history = [], []
-        self.dummy = False
+        self.deepcopy = False
 
         self.ranks = dict(zip(range(1, 9), range(8)))
         self.f_letters = dict(zip('abcdefgh', range(8)))  # File letters of the board.
@@ -145,8 +145,13 @@ class Board(object):
                "  {}".format(np.array2string(self._board, separator=', ', prefix='\t'),
                              np.array2string(self.c_board, separator=', ', prefix='\t'))
 
-    def __call__(self, dummy):
-        self.dummy = dummy
+    def __call__(self, deepcopy=False):
+        if deepcopy:
+            board = cp.deepcopy(self)
+            board.deepcopy = deepcopy
+            return board
+        else:
+            return cp.copy(self)
 
     def setup_board(self):
         # Board with pieces location despite color of the pieces.
@@ -256,11 +261,18 @@ class Board(object):
                 except StopIteration:
                     raise IndexError(f'Indexes should be between 0 and 7: not {san}')
 
-    def toggle_player(self):
+    def toggle_player(self, color=None):
         """
         Toggle the attribute::self._turn value depending on the current value. Nothing returns.
+
+        :param color: if provided toggle the player color base on this parameter, otherwise
+                      :attr:`self._turn` value.
+        :return: the toggled color value based on :attr:`color` or :attr:`self._turn` params.
         """
-        return PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
+        if color:
+            return PLAYERS_BITS.WHITE if color == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
+        else:
+            return PLAYERS_BITS.WHITE if self._turn == PLAYERS_BITS.BLACK else PLAYERS_BITS.BLACK
 
     def move(self, move, promotion=None, turn=None, explicit=False, cm_enabled=True):  # NOSONAR
         """
@@ -312,9 +324,9 @@ class Board(object):
             piece, p_color, _ = self.square(_from)
             d_piece, dp_color, _ = self.square(_to)
 
-            if (not piece or self._turn != p_color) \
-                    or (d_piece and self._turn == dp_color) \
-                    or self.is_checkmate:
+            if ((not piece or self._turn != p_color)
+                or (d_piece and self._turn == dp_color) or self.is_checkmate) \
+                    and not self.deepcopy:
                 return None
 
             moves = self.generate_moves(_from, explicit=explicit)
@@ -396,6 +408,25 @@ class Board(object):
                     out[k] = m[k]
             return out
 
+        def filtered(fun, *args):
+            """
+            Filter out moves which can be potential threats to the KING if they've made.
+            Return this dictionary to avoid plausible 'check/attack' situation from ally
+            movements.
+
+            :param fun:  high-level method which select all the possible moves despite
+                         the danger.
+            :param args: argument list for the high-level method to pass when they're
+                         being invoked.
+            :return:     the altered dictionary of possible non-threaten moves.
+            """
+            __out__ = fun(*args)
+            if not self.deepcopy:
+                for __to__ in list(__out__):
+                    if self.threat_detect(_from, __to__):
+                        del __out__[__to__]
+            return __out__
+
         def pawn():
             if not self.checks or explicit:
                 min_r, max_r, min_c, max_c = margins()
@@ -448,7 +479,7 @@ class Board(object):
                                 enp = self.square((i - 1, j)) if color == PLAYERS_BITS.BLACK \
                                     else self.square((i + 1, j))
 
-                                if enp.piece and enp.color != color \
+                                if enp.piece and PIECES[enp.piece - 1] == PIECES.PAWN and enp.color != color \
                                         and next(f for _, (t, f) in self.pawns_history.items()
                                                  if t == enp.location) == FLAGS.BIG_PAWN \
                                         and len(self.pawns_history) == [lo for lo, _ in self.pawns_history.values()] \
@@ -572,12 +603,12 @@ class Board(object):
                 for i in range(1, 3):
                     if _pk:
                         to[0] = self.square((loc[0], loc[1] + i))
-                        if self.threat_check(_from, to[0].location):
+                        if not self.deepcopy and self.threat_detect(_from, to[0].location):
                             count[0] += 1
 
                     if _pq:
                         to[1] = self.square((loc[0], loc[1] - i))
-                        if self.threat_check(_from, to[1].location):
+                        if not self.deepcopy and self.threat_detect(_from, to[1].location):
                             count[1] += 1
 
                 if not count[0] and to[0]:
@@ -600,22 +631,20 @@ class Board(object):
         if PIECES[piece] == PIECES.ROOK \
                 or PIECES[piece] == PIECES.BISHOP \
                 or PIECES[piece] == PIECES.QUEEN:
-            return common(switch.get(PIECES[piece]))
+            return filtered(common, switch.get(PIECES[piece]))
         else:
-            return switch.get(PIECES[piece], None)()
+            return filtered(switch.get(PIECES[piece], None))
 
-    def threat_check(self, _from, _to):
+    def threat_detect(self, _from, _to):
         _, color, _ = self.square(_from)
 
-        board = cp.deepcopy(self)
-        board(dummy=True)
+        board = self(deepcopy=True)
+        board.move(f'{_from}-{_to}',
+                   turn=self.toggle_player(color),
+                   explicit=True,
+                   cm_enabled=False)
 
-        board.update_board(_from, _to)
-
-        if color != board._turn:
-            board._turn = color
-
-        return bool(board.has_check())
+        return bool(board.checks)
 
     def has_check(self, _turn=None):
         rows, cols = np.where(self.c_board == [_turn if _turn else self.toggle_player()])
@@ -643,9 +672,7 @@ class Board(object):
                 for to in moves.keys():
                     for checks in self.checks:
                         if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
-                            board = cp.deepcopy(self)
-                            board(dummy=True)
-
+                            board = self(deepcopy=True)
                             board.move(f'{loc}-{to}',
                                        turn=board.toggle_player(),
                                        explicit=True,
@@ -669,9 +696,7 @@ class Board(object):
             for to in moves.keys():
                 for checks in self.checks:
                     if to == checks[0] or to in checks[1] or PIECES[_piece - 1] == PIECES.KING:
-                        board = cp.deepcopy(self)
-                        board(dummy=True)
-
+                        board = self(deepcopy=True)
                         board.move(f'{loc}-{to}',
                                    turn=board.toggle_player(),
                                    explicit=True,
