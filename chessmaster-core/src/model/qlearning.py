@@ -5,11 +5,27 @@ from collections import namedtuple, OrderedDict
 import numpy as np
 import torch
 import torch.nn as nn
+import chess
 
 from utils import TEMP_PATH, LOGGER
-from . import DEVICE, BATCH_SIZE, GAMMA, EPS_START, EPS_END, EPS_DECAY, TARGET_UPDATE
+from . import DEVICE, GAMMA, EPS_START, EPS_END, EPS_DECAY, TARGET_UPDATE
 
+BATCH_SIZE = 64
 TRANSITIONS = namedtuple('Transitions', ['piece', 'state', 'action', 'next_state', 'reward'])
+
+PIECES = namedtuple('Pieces', ('PAWN', 'KNIGHT', 'BISHOP', 'ROOK', 'QUEEN', 'KING'))(*'pnbrqk')
+PIECES_ENCODING = list(dict(enumerate(PIECES)).keys())
+
+BOARD_SQUARES = [chess.A8, chess.B8, chess.C8, chess.D8, chess.E8, chess.F8, chess.G8, chess.H8,
+                 chess.A7, chess.B7, chess.C7, chess.D7, chess.E7, chess.F7, chess.G7, chess.H7,
+                 chess.A6, chess.B6, chess.C6, chess.D6, chess.E6, chess.F6, chess.G6, chess.H6,
+                 chess.A5, chess.B5, chess.C5, chess.D5, chess.E5, chess.F5, chess.G5, chess.H5,
+                 chess.A4, chess.B4, chess.C4, chess.D4, chess.E4, chess.F4, chess.G4, chess.H4,
+                 chess.A3, chess.B3, chess.C3, chess.D3, chess.E3, chess.F3, chess.G3, chess.H3,
+                 chess.A2, chess.B2, chess.C2, chess.D2, chess.E2, chess.F2, chess.G2, chess.H2,
+                 chess.A1, chess.B1, chess.C1, chess.D1, chess.E1, chess.F1, chess.G1, chess.H1]
+
+BOARD_SQUARES_ENCODING = list(dict(enumerate(BOARD_SQUARES)).keys())
 
 
 class ReplayMemory(object):
@@ -157,15 +173,20 @@ class Agent(object):
         self.policy_net = DeepQNetwork("policy", alpha)  # Estimate of the current set of states.
         self.target_net = DeepQNetwork("target", alpha)  # Estimate of the successor set of states.
 
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+        self.target_net.eval()
+
     def select_action(self, observations):
         rand = np.random.random()
 
         if rand < 1 + self.EPSILON_START:
             with torch.no_grad():
-                actions = self.policy_net(observations)
-                return torch.argmax(actions).item()
+                # t.max(1) will return largest column value of each row.
+                # second column on max result is index of where max element was
+                # found, so we pick action with the larger expected reward.
+                return self.policy_net(observations).max(1)[1].view(1, 1)
         else:
-            return np.random.choice(self.action_space)
+            return torch.tensor([[np.random.choice(self.action_space)]], device=DEVICE)
 
     def learn(self):
         self.policy_net.optimizer.zero_grad()
@@ -174,3 +195,6 @@ class Agent(object):
             self.target_net.load_state_dict(self.policy_net.state_dict())
 
         sample = self.memory.sample(BATCH_SIZE)
+        batch = TRANSITIONS(*zip(*sample))
+
+        # torch.ga

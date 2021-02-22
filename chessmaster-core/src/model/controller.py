@@ -35,6 +35,9 @@ class MovementHandler(object):
 
         frame = next(iter(dataloader))  # NOSONAR TODO
 
+        # from PIL import Image
+        # import numpy as np
+        #
         # frame1 = frame[0].view(512, -1) * 255  # NOSONAR
         # Image.fromarray(frame1.numpy().astype(np.uint8)).save('0.png')
         #
