@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 
+from threading import Thread
+
 import cv2
-from torch.utils.data import DataLoader
+import numpy as np
+from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms as T
 
 from utils import IMAGE_PATH, LOGGER, IMAGE_SIZE
 from . import BATCH_SIZE, NUM_WORKER, IS_CUDA, ToColor, ChessBoardDataset
+
+TEST_ENABLED = False
 
 
 class MovementHandler(object):
@@ -33,18 +38,32 @@ class MovementHandler(object):
         dataset = ChessBoardDataset(frames, transform=self.transform)
         dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, num_workers=NUM_WORKER, pin_memory=IS_CUDA)
 
-        frame = next(iter(dataloader))  # NOSONAR TODO
-
-        # from PIL import Image
-        # import numpy as np
-        #
-        # frame1 = frame[0].view(512, -1) * 255  # NOSONAR
-        # Image.fromarray(frame1.numpy().astype(np.uint8)).save('0.png')
-        #
-        # frame2 = frame[1].view(512, -1) * 255  # NOSONAR
-        # Image.fromarray(frame2.numpy().astype(np.uint8)).save('1.png')
+        if TEST_ENABLED:
+            batch = next(iter(dataloader))
+            Thread(target=self.test_, args=(batch,)).start()
 
         return "nextMove"
 
     def response(self):
         return f"""{{ "_id": "{self._id}", "_wsid": "{self._wsid}", "move": "{self.result}" }}"""
+
+    @staticmethod
+    def test_(frame):
+        cv2.namedWindow('FirstFrame', flags=cv2.WINDOW_AUTOSIZE)
+        cv2.namedWindow('SecondFrame', flags=cv2.WINDOW_AUTOSIZE)
+
+        frame1 = frame[0].view(512, -1) * 255
+        frame2 = frame[1].view(512, -1) * 255
+
+        frame1 = frame1.numpy().astype(np.uint8)
+        frame2 = frame2.numpy().astype(np.uint8)
+
+        while True:
+
+            cv2.imshow('FirstFrame', frame1)
+            cv2.imshow('SecondFrame', frame2)
+
+            if cv2.waitKey(0) & 0xff == 27:
+                break
+
+        cv2.destroyAllWindows()

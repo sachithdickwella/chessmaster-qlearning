@@ -8,6 +8,8 @@
     <link rel="icon" type="image/png" href="assets/img/favicon.png"/>
     <link type="text/css" rel="stylesheet" href="assets/css/all.css">
     <link type="text/css" rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link type="text/css" rel="stylesheet" href="assets/css/mdb.min.css">
+    <link type="text/css" rel="stylesheet" href="assets/css/mdb.rtl.min.css">
     <link type="text/css" rel="stylesheet" href="assets/css/chessboard-1.0.0.min.css">
     <link type="text/css" rel="stylesheet" href="assets/css/magnet.css">
 </head>
@@ -22,11 +24,14 @@
             <!-- Statistics -->
         </div>
         <div class="col">
-            <button type="button" class="btn btn-success mt-2 float-right">
-                Start Training
+            <button type="button" class="btn btn-success btn-lg mt-2 float-right fw-bold"
+                    th:style="${mode == 'train' ? 'display:block !important' : 'display:none !important'}"
+                    onclick="train(this)">
+                <i class="fas fa-running fa-lg"></i>
+                &nbsp;&nbsp;Run Training
             </button>
             <div class="row h-90 d-flex justify-content-center align-items-center">
-                <div id="board1" class="w-512px"></div>
+                <div id="board1" class="w-512px p-0"></div>
             </div>
             <div class="row pr-4">
                 <p class="w-100 mb-0 text-right"><span id="msg"></span>&nbsp;&nbsp;<b>: MESSAGE</b></p>
@@ -38,6 +43,7 @@
 </div>
 <script src="assets/js/jquery-3.5.1.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script>
+<script src="assets/js/mdb.min.js"></script>
 <script src="assets/js/chess.min.js"></script>
 <script src="assets/js/chessboard-1.0.0.min.js"></script>
 <script src="assets/js/html2canvas.min.js"></script>
