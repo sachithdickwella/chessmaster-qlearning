@@ -75,9 +75,10 @@ const onDragStart = (source, piece) => {
 /**
  * Shoot the chessboard HTML as a canvas and push it to the server end as an image.
  *
- * @param callback of the shot function after successful snapshot.
+ * @param callbacks of the shot function after successful snapshot.
  */
-const shot = (callback) => html2canvas(document.querySelector("#board1")).then(canvas => callback(canvas));
+const shot = (...callbacks) => html2canvas(document.querySelector("#board1"))
+    .then(canvas => $.each(callbacks, (_, value) => value(canvas)));
 /**
  * Retain the capturing blob in the 'startFrame' so, we can later use it.
  *
@@ -162,6 +163,18 @@ const _wait = (c, d) => {
 const _fen_ = () => {
     const fen = $('#fen_hidden').text();
     return fen !== undefined && fen !== '' ? fen : 0;
+}
+/**
+ * Start the training by sending the initial board status to the
+ * core program.
+ *
+ * @param e is the element that required to be disabled.
+ */
+const train = (e) => {
+    $(e).prop('disabled', true);
+    _wait('wait', 'block');
+
+    shot(retainBlob, push)
 }
 /**
  * JQuery "ready" method to start the client side process and listeners.
