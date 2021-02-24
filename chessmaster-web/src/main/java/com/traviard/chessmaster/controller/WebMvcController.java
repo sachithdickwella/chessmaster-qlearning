@@ -1,5 +1,6 @@
 package com.traviard.chessmaster.controller;
 
+import com.traviard.chessmaster.util.RunnableMode;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -37,6 +38,11 @@ public class WebMvcController {
      */
     @Value("${app.home.title}")
     private String appHomeTitle;
+    /**
+     * Application execution mode from properties.
+     */
+    @Value("#{T(com.traviard.chessmaster.util.RunnableMode).of('${app.execution.mode}')}")
+    private RunnableMode runMode;
 
     /**
      * Update the {@code JSESSIONID} cookie attributes to with custom details
@@ -53,7 +59,6 @@ public class WebMvcController {
         serializer.setUseHttpOnlyCookie(true);
         serializer.setDomainNamePattern("^.+?\\.(\\w+\\.[a-z]+)$");
         serializer.setSameSite("Strict");
-
         return serializer;
     }
 
@@ -70,6 +75,7 @@ public class WebMvcController {
         model.addAttribute("fen", Optional.ofNullable(request.getSession()
                 .getAttribute(FEN.attribute()))
                 .orElse(EMPTY));
+        model.addAttribute("mode", runMode.mode());
 
         return "index";
     }
