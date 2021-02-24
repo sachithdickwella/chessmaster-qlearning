@@ -4,7 +4,7 @@ from threading import Thread
 
 import cv2
 import numpy as np
-from torch.utils.data import DataLoader
+from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms as T
 
 from utils import IMAGE_PATH, LOGGER, IMAGE_SIZE
@@ -49,8 +49,8 @@ class MovementHandler(object):
 
     @staticmethod
     def test_(frame):
-        cv2.namedWindow('win1', flags=cv2.WINDOW_AUTOSIZE)
-        cv2.namedWindow('win2', flags=cv2.WINDOW_AUTOSIZE)
+        cv2.namedWindow('FirstFrame', flags=cv2.WINDOW_AUTOSIZE)
+        cv2.namedWindow('SecondFrame', flags=cv2.WINDOW_AUTOSIZE)
 
         frame1 = frame[0].view(512, -1) * 255
         frame2 = frame[1].view(512, -1) * 255
@@ -60,8 +60,8 @@ class MovementHandler(object):
 
         while True:
 
-            cv2.imshow('win1', frame1)
-            cv2.imshow('win2', frame2)
+            cv2.imshow('FirstFrame', frame1)
+            cv2.imshow('SecondFrame', frame2)
 
             if cv2.waitKey(0) & 0xff == 27:
                 break
