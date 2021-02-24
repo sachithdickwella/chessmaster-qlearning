@@ -77,8 +77,12 @@ const onDragStart = (source, piece) => {
  *
  * @param callbacks of the shot function after successful snapshot.
  */
-const shot = (...callbacks) => html2canvas(document.querySelector("#board1"))
-    .then(canvas => $.each(callbacks, (_, value) => value(canvas)));
+const shot = (...callbacks) => html2canvas(document.querySelector('#board1 div div'), {
+    scrollX: -window.scrollX,
+    scrollY: -window.scrollY,
+    windowWidth: document.documentElement.offsetWidth,
+    windowHeight: document.documentElement.offsetHeight
+}).then(canvas => $.each(callbacks, (_, value) => value(canvas)));
 /**
  * Retain the capturing blob in the 'startFrame' so, we can later use it.
  *
@@ -92,6 +96,7 @@ const retainBlob = (canvas) => canvas.toBlob((blob) => startFrame = blob);
  */
 const push = (canvas) => canvas.toBlob((blob) => {
     const form = new FormData();
+    console.log(canvas)
     form.append('frame1', startFrame, 'board-frame1');
     form.append('frame2', blob, 'board-frame2');
     form.append('fen', game.fen());
