@@ -1,4 +1,4 @@
-let board, game, startFrame, _fen, _pgn;
+let board, game, startFrame, _fen, _pgn, is_training = false;
 /**
  * Connect and subscribe a WebSocket. in order to receive server responses from
  * the model.
@@ -96,10 +96,10 @@ const retainBlob = (canvas) => canvas.toBlob((blob) => startFrame = blob);
  */
 const push = (canvas) => canvas.toBlob((blob) => {
     const form = new FormData();
-    console.log(canvas)
     form.append('frame1', startFrame, 'board-frame1');
     form.append('frame2', blob, 'board-frame2');
     form.append('fen', game.fen());
+    form.append('isTrainStarted', is_training)
     $.ajax({
         url: '/movement/grab',
         method: 'POST',
@@ -178,6 +178,8 @@ const _fen_ = () => {
 const train = (e) => {
     $(e).prop('disabled', true);
     _wait('wait', 'block');
+
+    is_training = true
 
     shot(retainBlob, push)
 }
