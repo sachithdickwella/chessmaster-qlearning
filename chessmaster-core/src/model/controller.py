@@ -58,6 +58,8 @@ class MovementHandler(object):
         frame1 = frame1.numpy().astype(np.uint8)
         frame2 = frame2.numpy().astype(np.uint8)
 
+        LOGGER.info(f'Incoming frame demonstration on UI -> FRAME1 - {frame1.shape}, FRAME2 - {frame2.shape}')
+
         while True:
 
             cv2.imshow('FirstFrame', frame1)

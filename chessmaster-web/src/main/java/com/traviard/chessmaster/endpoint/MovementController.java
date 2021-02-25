@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.SequenceInputStream;
@@ -30,6 +31,7 @@ import java.util.Optional;
 import static com.traviard.chessmaster.util.AppConstants.SPLITTER;
 import static com.traviard.chessmaster.util.LogMessages.*;
 import static com.traviard.chessmaster.util.SessionConstants.FEN;
+import static com.traviard.chessmaster.util.SessionConstants.IS_TRAIN_STARTED;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 /**
@@ -88,6 +90,7 @@ public class MovementController {
     public ResponseEntity<Void> grabImage(@RequestParam("frame1") MultipartFile frame1,
                                           @RequestParam("frame2") MultipartFile frame2,
                                           @RequestParam("fen") String fen,
+                                          @RequestParam("isTrainStarted") Boolean isTrainStarted,
                                           @NotNull HttpServletRequest request) {
 
         var cookies = request.getCookies();
@@ -120,7 +123,9 @@ public class MovementController {
                             .append(Optional.ofNullable(frame2.getOriginalFilename()).orElse("<NoFileName>")),
                     frame1.getSize() + frame2.getSize()));
 
-            request.getSession().setAttribute(FEN.attribute(), fen);
+            HttpSession session = request.getSession();
+            session.setAttribute(FEN.attribute(), fen);
+            session.setAttribute(IS_TRAIN_STARTED.attribute(), isTrainStarted);
 
             return ResponseEntity.ok().build();
         } catch (IOException ex) {

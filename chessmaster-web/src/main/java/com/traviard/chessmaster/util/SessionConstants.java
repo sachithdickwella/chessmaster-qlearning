@@ -6,9 +6,13 @@ package com.traviard.chessmaster.util;
 public enum SessionConstants {
 
     /**
-     * FEN session attribute for the FEN string.
+     * Session attribute for the FEN string.
      */
-    FEN("fen");
+    FEN("fen"),
+    /**
+     * Session attribute for hold if the training has started.
+     */
+    IS_TRAIN_STARTED("isTrainStarted");
 
     /**
      * Actual session attribute name value.

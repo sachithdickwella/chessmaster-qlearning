@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.context.annotation.SessionScope;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.Optional;
 
 import static com.traviard.chessmaster.util.SessionConstants.FEN;
+import static com.traviard.chessmaster.util.SessionConstants.IS_TRAIN_STARTED;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 /**
@@ -71,11 +73,13 @@ public class WebMvcController {
      */
     @GetMapping(path = {"/", "index", "index.html"})
     public String index(@NotNull Model model, @NotNull HttpServletRequest request) {
+        HttpSession session = request.getSession();
+
         model.addAttribute("title", appHomeTitle);
-        model.addAttribute("fen", Optional.ofNullable(request.getSession()
-                .getAttribute(FEN.attribute()))
-                .orElse(EMPTY));
+        model.addAttribute("fen", Optional.ofNullable(session.getAttribute(FEN.attribute())).orElse(EMPTY));
         model.addAttribute("mode", runMode.mode());
+        model.addAttribute("isTrainStarted", Optional.ofNullable(
+                session.getAttribute(IS_TRAIN_STARTED.attribute())).orElse(false));
 
         return "index";
     }
