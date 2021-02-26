@@ -2,6 +2,7 @@
 
 from threading import Thread
 
+import copy as cp
 import cv2
 import numpy as np
 from torch.utils.data.dataloader import DataLoader
@@ -10,7 +11,7 @@ from torchvision import transforms as T
 from utils import IMAGE_PATH, LOGGER, IMAGE_SIZE
 from . import BATCH_SIZE, NUM_WORKER, IS_CUDA, ToColor, ChessBoardDataset
 
-TEST_ENABLED = False
+TEST_ENABLED = True
 
 
 class MovementHandler(object):
@@ -43,6 +44,9 @@ class MovementHandler(object):
             Thread(target=self.test_, args=(batch,)).start()
 
         return "nextMove"
+
+    def train(self, frames):
+        pass
 
     def response(self):
         return f"""{{ "_id": "{self._id}", "_wsid": "{self._wsid}", "move": "{self.result}" }}"""
