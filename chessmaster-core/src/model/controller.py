@@ -2,7 +2,6 @@
 
 from threading import Thread
 
-import copy as cp
 import cv2
 import numpy as np
 from torch.utils.data.dataloader import DataLoader
