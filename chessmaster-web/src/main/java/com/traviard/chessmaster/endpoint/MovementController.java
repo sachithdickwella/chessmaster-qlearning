@@ -57,10 +57,6 @@ public class MovementController {
      * Instance of {@link SimpMessagingTemplate} to send messages.
      */
     private final SimpMessagingTemplate template;
-    /**
-     * Hold the value if the training has started.
-     */
-    private boolean isTraining = false;
 
     /**
      * Single-arg constructor to initialize {@link #serverComponent} local member
@@ -112,18 +108,13 @@ public class MovementController {
                 .orElse(StringUtils.EMPTY);
 
         try {
-            if (isTrainStarted && !this.isTraining) {
-                this.isTraining = true;
-                serverComponent.write(id, wsid, frame1.getInputStream());
-            } else {
-                var imageSequence = new SequenceInputStream(Collections.enumeration(List.of(
-                        frame1.getInputStream(),
-                        new ByteArrayInputStream(SPLITTER.constant().getBytes(StandardCharsets.UTF_8)),
-                        frame2.getInputStream()
-                )));
+            var imageSequence = new SequenceInputStream(Collections.enumeration(List.of(
+                    frame1.getInputStream(),
+                    new ByteArrayInputStream(SPLITTER.constant().getBytes(StandardCharsets.UTF_8)),
+                    frame2.getInputStream()
+            )));
 
-                serverComponent.write(id, wsid, imageSequence);
-            }
+            serverComponent.write(id, wsid, imageSequence);
 
             LOGGER.info(INFO_FILE_PUSH_SUCCESS.message(
                     id,
