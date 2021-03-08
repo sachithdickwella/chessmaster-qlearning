@@ -70,17 +70,19 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
 
         :param data: item just received via the TCP socket as a list.
         """
-        _id, _wsid = (None, None)
+        _id, _wsid, _status = (None, None, 0)
         iteration = 0
         buffer = bytearray()
-        images = []
+        images, is_train = [], False
 
         for line in data:
             if iteration == 0:
                 _id = line[:self._id_length].decode('utf-8')
                 _wsid = line[self._id_length: self._id_length + self._wsid_length].decode('utf-8')
+                _status = int(line[self._id_length + self._wsid_length: self._id_length + self._wsid_length + 1]
+                              .decode('utf-8'))
 
-                line = line[self._id_length + self._wsid_length:]
+                line = line[self._id_length + self._wsid_length + 1:]
 
             if self.splitter in str(line):
                 b_splitter = bytearray(self.splitter.encode())
@@ -117,7 +119,7 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         Note: '_wsid' doesn't involve on the model process, it just use to find 
         websocket destination where this frame originally came from. 
         """
-        SESSIONS[_id].accept(_wsid, images)
+        SESSIONS[_id].accept(_wsid, images, _status)
         """
         Respond to the movement came from the UI. With this response, chess
         board will be updated.

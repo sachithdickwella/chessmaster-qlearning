@@ -24,7 +24,7 @@ class MovementHandler(object):
             T.ToTensor()
         ])
 
-    def accept(self, _wsid, images):
+    def accept(self, _wsid, images, train=False):
         # Save the second image of the incoming array which has the movement update.
         path = f'{IMAGE_PATH}/{self._id}.png'
         images[1].save(path)
@@ -32,23 +32,34 @@ class MovementHandler(object):
         LOGGER.info(f'Incoming frame saved on {path} for later reference')
 
         self._wsid = _wsid
-        self.result = self.model_invoke(images)
 
-    def model_invoke(self, frames):
-        dataset = ChessBoardDataset(frames, transform=self.transform)
+        dataset = ChessBoardDataset(images, transform=self.transform)
         dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, num_workers=NUM_WORKER, pin_memory=IS_CUDA)
 
-        if TEST_ENABLED:
-            batch = next(iter(dataloader))
-            Thread(target=self.test_, args=(batch,)).start()
+        if train:
+            self.result = self.train(dataloader)
+        else:
+            self.result = self.evaluate(dataloader)
+
+    def evaluate(self, dataloader):  # NOSONAR
+        LOGGER.info(f'Evaluation -> data loader {dataloader}')
+        self.print_(dataloader)
 
         return "nextMove"
 
-    def train(self, frames):
-        pass
+    def train(self, dataloader):  # NOSONAR
+        LOGGER.info(f'Training -> data loader {dataloader}')
+        self.print_(dataloader)
+
+        return "nextMove"  # Return the next move inside the loop.
 
     def response(self):
         return f"""{{ "_id": "{self._id}", "_wsid": "{self._wsid}", "move": "{self.result}" }}"""
+
+    def print_(self, dataloader):
+        if TEST_ENABLED:
+            batch = next(iter(dataloader))
+            Thread(target=self.test_, args=(batch,)).start()
 
     @staticmethod
     def test_(frame):
