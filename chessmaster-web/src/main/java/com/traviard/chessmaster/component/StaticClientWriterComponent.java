@@ -72,15 +72,21 @@ public class StaticClientWriterComponent {
      *
      * @param id          of the UI as a {@link String} instance.
      * @param wsid        which contains the websocket session id as a {@link String}.
+     * @param isTrain     training status of the model program.
      * @param imageStream object came from UI multipart upload.
      * @throws IOException if the downstream push fails.
      */
-    public void write(@NotNull String id, @NotNull String wsid, @NotNull InputStream imageStream) throws IOException {
+    public void write(@NotNull String id,
+                      @NotNull String wsid,
+                      boolean isTrain,
+                      @NotNull InputStream imageStream) throws IOException {
+
         try (var channel = SocketChannel.open(new InetSocketAddress(host, port));
              var sequenceStream = new SequenceInputStream(Collections.enumeration(
                      List.of(
                              new ByteArrayInputStream(id.getBytes(StandardCharsets.UTF_8)),
                              new ByteArrayInputStream(wsid.getBytes(StandardCharsets.UTF_8)),
+                             new ByteArrayInputStream((isTrain ? "1" : "0").getBytes(StandardCharsets.UTF_8)),
                              imageStream
                      ))
              )) {

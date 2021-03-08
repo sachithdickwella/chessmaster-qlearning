@@ -28,10 +28,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static com.traviard.chessmaster.util.AppConstants.SPLITTER;
+import static com.traviard.chessmaster.util.AppConstants.*;
 import static com.traviard.chessmaster.util.LogMessages.*;
 import static com.traviard.chessmaster.util.SessionConstants.FEN;
-import static com.traviard.chessmaster.util.SessionConstants.IS_TRAIN_STARTED;
+import static com.traviard.chessmaster.util.SessionConstants.IS_TRAIN;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 /**
@@ -90,7 +90,7 @@ public class MovementController {
     public ResponseEntity<Void> grabImage(@RequestParam("frame1") MultipartFile frame1,
                                           @RequestParam("frame2") MultipartFile frame2,
                                           @RequestParam("fen") String fen,
-                                          @RequestParam("isTrainStarted") Boolean isTrainStarted,
+                                          @RequestParam("isTrain") Boolean isTrain,
                                           @NotNull HttpServletRequest request) {
 
         var cookies = request.getCookies();
@@ -114,7 +114,7 @@ public class MovementController {
                     frame2.getInputStream()
             )));
 
-            serverComponent.write(id, wsid, imageSequence);
+            serverComponent.write(id, wsid, isTrain, imageSequence);
 
             LOGGER.info(INFO_FILE_PUSH_SUCCESS.message(
                     id,
@@ -126,7 +126,7 @@ public class MovementController {
 
             HttpSession session = request.getSession();
             session.setAttribute(FEN.attribute(), fen);
-            session.setAttribute(IS_TRAIN_STARTED.attribute(), isTrainStarted);
+            session.setAttribute(IS_TRAIN.attribute(), isTrain);
 
             return ResponseEntity.ok().build();
         } catch (IOException ex) {

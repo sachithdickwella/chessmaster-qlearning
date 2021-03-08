@@ -22,15 +22,8 @@ public enum AppConstants {
     /**
      * Splitter for two streams combined with {@code SequencedInputStream}.
      */
-    SPLITTER("splitter"),
-    /**
-     * Keyword to notify the core program if this frames are for training.
-     */
-    TRAIN("train"),
-    /**
-     * Keyword ot notify the core program if this frames are for evaluation.
-     */
-    EVALUATE("eval");
+    SPLITTER("splitter");
+
     /**
      * Local variable to keep {@code constance} command or
      * {@link String} value.
