@@ -12,7 +12,7 @@ public enum SessionConstants {
     /**
      * Session attribute for hold if the training has started.
      */
-    IS_TRAIN_STARTED("isTrainStarted");
+    IS_TRAIN("isTrain");
 
     /**
      * Actual session attribute name value.

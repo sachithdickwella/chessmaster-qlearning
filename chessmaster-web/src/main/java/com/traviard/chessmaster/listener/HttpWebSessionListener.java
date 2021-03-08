@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.traviard.chessmaster.util.AppConstants.CREATE_SESSION;
 import static com.traviard.chessmaster.util.AppConstants.INVALIDATE_SESSION;
-import static com.traviard.chessmaster.util.SessionConstants.IS_TRAIN_STARTED;
+import static com.traviard.chessmaster.util.SessionConstants.IS_TRAIN;
 
 /**
  * @author Sachith Dickwella
@@ -49,7 +49,7 @@ public class HttpWebSessionListener extends EventListener implements HttpSession
         final var session = event.getSession();
         final var sessionId = session.getId();
 
-        session.setAttribute(IS_TRAIN_STARTED.attribute(), false);
+        session.setAttribute(IS_TRAIN.attribute(), false);
 
         sessionIds.add(sessionId);
         send(sessionId, CREATE_SESSION);

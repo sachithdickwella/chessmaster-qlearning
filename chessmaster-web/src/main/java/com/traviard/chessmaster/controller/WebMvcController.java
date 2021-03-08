@@ -18,7 +18,7 @@ import javax.servlet.http.HttpSession;
 import java.util.Optional;
 
 import static com.traviard.chessmaster.util.SessionConstants.FEN;
-import static com.traviard.chessmaster.util.SessionConstants.IS_TRAIN_STARTED;
+import static com.traviard.chessmaster.util.SessionConstants.IS_TRAIN;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 /**
@@ -78,8 +78,8 @@ public class WebMvcController {
         model.addAttribute("title", appHomeTitle);
         model.addAttribute("fen", Optional.ofNullable(session.getAttribute(FEN.attribute())).orElse(EMPTY));
         model.addAttribute("mode", runMode.mode());
-        model.addAttribute("isTrainStarted", Optional.ofNullable(
-                session.getAttribute(IS_TRAIN_STARTED.attribute())).orElse(false));
+        model.addAttribute("isTrain", Optional.ofNullable(
+                session.getAttribute(IS_TRAIN.attribute())).orElse(false));
 
         return "index";
     }

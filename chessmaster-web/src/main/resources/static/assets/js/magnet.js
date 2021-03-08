@@ -99,7 +99,7 @@ const push = (canvas) => canvas.toBlob((blob) => {
     form.append('frame1', startFrame, 'board-frame1');
     form.append('frame2', blob, 'board-frame2');
     form.append('fen', game.fen());
-    form.append('isTrainStarted', is_training)
+    form.append('isTrain', is_training)
     $.ajax({
         url: '/movement/grab',
         method: 'POST',
@@ -223,4 +223,8 @@ $(() => {
      * Connect to the WebSocket Broker.
      */
     connect();
+    /**
+     * Keep the 'is_training' value base on the disable status of 'btn-train'.
+     */
+    is_training = $('#btn-train').prop("disabled")
 });
