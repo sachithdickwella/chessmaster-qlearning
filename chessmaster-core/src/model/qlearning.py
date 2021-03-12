@@ -2,10 +2,10 @@
 
 from collections import namedtuple, OrderedDict
 
+import chess
 import numpy as np
 import torch
 import torch.nn as nn
-import chess
 
 from utils import TEMP_PATH, LOGGER
 from . import DEVICE, GAMMA, EPS_START, EPS_END, EPS_DECAY, TARGET_UPDATE
@@ -165,7 +165,7 @@ class Agent(object):
         self.EPSILON_DECAY = EPS_DECAY
 
         self.action_space = action_space
-        self.episodes = 0    # Number of state transitions.
+        self.episodes = 0  # Number of state transitions.
         self.n_episodes = 0  # Number of time learn function called to replace the 'target' network.
 
         self.memory = ReplayMemory(capacity=mem_size)
