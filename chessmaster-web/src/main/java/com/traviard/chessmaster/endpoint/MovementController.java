@@ -147,7 +147,7 @@ public class MovementController {
     public ResponseEntity<Void> nextMove(@RequestBody NextMove nextMove) {
         LOGGER.info(INFO_RESPONSE_FROM_PYTHON_MODEL.message(nextMove));
 
-        final String sessionId = nextMove.get_wsid();
+        final String sessionId = nextMove._wsid();
 
         final SimpMessageHeaderAccessor accessor = SimpMessageHeaderAccessor
                 .create(SimpMessageType.MESSAGE);
