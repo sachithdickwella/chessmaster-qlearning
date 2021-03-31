@@ -67,37 +67,37 @@ class DeepQNetwork(nn.Module):
         self.main = nn.Sequential(OrderedDict([
             (
                 'conv1', nn.Sequential(
-                    nn.Conv2d(in_channels=nc, out_channels=32, kernel_size=5, stride=2),
+                    nn.Conv2d(in_channels=nc, out_channels=32, kernel_size=(5, 5), stride=(2, 2)),
                     nn.BatchNorm2d(32),
                     nn.ReLU()
                 )
             ), (
                 'conv2', nn.Sequential(
-                    nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=2),
+                    nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(5, 5), stride=(2, 2)),
                     nn.BatchNorm2d(64),
                     nn.ReLU()
                 )
             ), (
                 'conv3', nn.Sequential(
-                    nn.Conv2d(in_channels=64, out_channels=128, kernel_size=5, stride=2),
+                    nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(5, 5), stride=(2, 2)),
                     nn.BatchNorm2d(128),
                     nn.ReLU()
                 )
             ), (
                 'conv4', nn.Sequential(
-                    nn.Conv2d(in_channels=128, out_channels=256, kernel_size=5, stride=2),
+                    nn.Conv2d(in_channels=128, out_channels=256, kernel_size=(5, 5), stride=(2, 2)),
                     nn.BatchNorm2d(256),
                     nn.ReLU()
                 )
             ), (
                 'conv5', nn.Sequential(
-                    nn.Conv2d(in_channels=256, out_channels=512, kernel_size=5, stride=2),
+                    nn.Conv2d(in_channels=256, out_channels=512, kernel_size=(5, 5), stride=(2, 2)),
                     nn.BatchNorm2d(512),
                     nn.ReLU()
                 )
             ), (
                 'conv6', nn.Sequential(
-                    nn.Conv2d(in_channels=512, out_channels=512, kernel_size=5, stride=2),
+                    nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(5, 5), stride=(2, 2)),
                     nn.BatchNorm2d(512),
                     nn.ReLU()
                 )
@@ -173,8 +173,10 @@ class Agent(object):
         self.policy_net = DeepQNetwork("policy", alpha)  # Estimate of the current set of states.
         self.target_net = DeepQNetwork("target", alpha)  # Estimate of the successor set of states.
 
-        self.target_net.load_state_dict(self.policy_net.state_dict())
+        self.target_net.load_state_dict(OrderedDict(self.policy_net.state_dict()))
         self.target_net.eval()
+
+        self.n_episodes += 1
 
     def select_action(self, observations):
         rand = np.random.random()
@@ -192,9 +194,7 @@ class Agent(object):
         self.policy_net.optimizer.zero_grad()
 
         if self.n_episodes % TARGET_UPDATE == 0:
-            self.target_net.load_state_dict(self.policy_net.state_dict())
+            self.target_net.load_state_dict(OrderedDict(self.policy_net.state_dict()))
 
         sample = self.memory.sample(BATCH_SIZE)
         batch = TRANSITIONS(*zip(*sample))
-
-        # torch.ga

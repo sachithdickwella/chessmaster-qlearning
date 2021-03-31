@@ -10,7 +10,7 @@ from torchvision import transforms as T
 from utils import IMAGE_PATH, LOGGER, IMAGE_SIZE
 from . import BATCH_SIZE, NUM_WORKER, IS_CUDA, ToColor, ChessBoardDataset
 
-TEST_ENABLED = True
+TEST_ENABLED = False
 
 
 class MovementHandler(object):
