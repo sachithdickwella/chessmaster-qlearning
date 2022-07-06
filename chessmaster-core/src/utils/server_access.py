@@ -159,16 +159,16 @@ class TCPRequestHandler(socketserver.StreamRequestHandler):
         LOGGER.info(f'Cleared out all the sessions in the context')
 
 
-def add_session(D, _id):  # NOSONAR
+def add_session(d, _id):  # NOSONAR
     """
     Add the parameter '_id' to the global variable 'SESSION' with
     new 'MovementHandler' instances.
 
-    :param D: Dictionary object to insert the element of _id and new
+    :param d: Dictionary object to insert the element of _id and new
     instance of 'MovementHandler'.
     :param _id: session id to insert into the 'SESSION' dictionary.
     """
-    D[_id] = MovementHandler(_id)
+    d[_id] = MovementHandler(_id)
 
 
 def init():
@@ -183,19 +183,19 @@ def init():
         a parallel instances.  
         """
         with Manager() as manager:
-            D = manager.dict()  # NOSONAR
+            d = manager.dict()  # NOSONAR
 
             ps = []
             for _id in session_ids:
-                p = Process(target=add_session, args=(D, _id))
+                p = Process(target=add_session, args=(d, _id))
                 p.start()
 
                 ps.append(p)
             for p in ps:
                 p.join()
 
-            SESSIONS.update(D)
-            del D  # Retain the memory by deleting old dictionary from 'manager'.
+            SESSIONS.update(d)
+            del d  # Retain the memory by deleting old dictionary from 'manager'.
     except ConnectionError:
         LOGGER.warning("REST endpoints for SESSION info are not accessible. Proceed with initial SESSION values.")
     finally:

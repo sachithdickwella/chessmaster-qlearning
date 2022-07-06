@@ -61,7 +61,7 @@ class ToColor(object):
         :param image: PIL.Image to change the color channels.
         :return: the image as a PIL.Image.
         """
-        if not type(image) is PngImageFile:
+        if type(image) is not PngImageFile:
             raise TypeError(f"'image' should be a PIL.Image. Got {type(image)}")
 
         image = np.array(image, dtype=np.uint8)

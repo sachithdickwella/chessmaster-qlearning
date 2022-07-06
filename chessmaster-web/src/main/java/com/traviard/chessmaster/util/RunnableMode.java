@@ -16,7 +16,7 @@ public enum RunnableMode {
     /**
      * Application runs on evaluation mode to show the results.
      */
-    EVAL("EVAL");
+    EVAL("eval");
 
     /**
      * Local member to hold the mode value as a {@link String}.

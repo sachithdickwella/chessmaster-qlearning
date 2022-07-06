@@ -34,13 +34,24 @@ public class StaticClientWriterComponent {
     /**
      * The host name of the server program.
      */
-    @Value("${app.tcp.server.socket.host}")
-    private String host;
+    private final String host;
     /**
      * The port number, or 0 to use a port number that is automatically allocated.
      */
-    @Value("#{T(Integer).parseInt(${app.tcp.server.socket.port})}")
-    private int port;
+    private final int port;
+
+    /**
+     * All-args constructor to initialize local member variables {@link #host} and {@link #port}.
+     *
+     * @param host {@link String} value to denote the target server name. This could either hostname
+     *             or an IP address.
+     * @param port {@code int} port number of the target server.
+     */
+    public StaticClientWriterComponent(@Value("${app.tcp.server.socket.host}") @NotNull String host,
+                                       @Value("#{T(Integer).parseInt(${app.tcp.server.socket.port})}") int port) {
+        this.host = host;
+        this.port = port;
+    }
 
     /**
      * Send out the command along with the {@code id} to the downstream Python program,
